@@ -2,7 +2,7 @@
 
 A small Python tool for checking CSV files before using them in a data or ML project.
 
-Right now it counts rows, columns, empty cells, and duplicate rows. Cells with only spaces count as empty. Duplicate rows are exact matches, and only copies after the first row count. It doesn't change the file.
+Right now it counts rows, columns, empty cells, and duplicate rows. It also shows the percentage of values missing from each column. Cells with only spaces count as empty. Duplicate rows are exact matches, and only copies after the first row count. It doesn't change the file.
 
 Run the example with Python 3:
 
@@ -18,4 +18,4 @@ To run the tests:
 python3 -m unittest -v
 ```
 
-Next: add missing-value percentages, then save the report to a file.
+Next: save the report to a file.

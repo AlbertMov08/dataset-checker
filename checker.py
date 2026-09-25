@@ -3,6 +3,12 @@ import csv
 import sys
 
 
+def percentage(part, total):
+    if total == 0:
+        return 0.0
+    return part / total * 100
+
+
 def check_csv(path):
     """Count missing cells and repeated rows in a CSV."""
     with open(path, newline="", encoding="utf-8-sig") as file:
@@ -70,7 +76,8 @@ def main():
     print(f"Duplicate rows: {report['duplicates']}")
     print("Missing values:")
     for column, count in report["missing"].items():
-        print(f"  {column}: {count}")
+        missing_percent = percentage(count, report["rows"])
+        print(f"  {column}: {count} ({missing_percent:.1f}%)")
     return 0
 
 

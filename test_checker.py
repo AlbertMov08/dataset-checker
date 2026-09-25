@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from checker import check_csv
+from checker import check_csv, percentage
 
 
 class CheckerTests(unittest.TestCase):
@@ -69,6 +69,10 @@ class CheckerTests(unittest.TestCase):
         self.path.write_bytes(b"name\n\xff\n")
         with self.assertRaises(UnicodeDecodeError):
             check_csv(self.path)
+
+    def test_percentage(self):
+        self.assertEqual(percentage(1, 4), 25.0)
+        self.assertEqual(percentage(0, 0), 0.0)
 
 
 if __name__ == "__main__":

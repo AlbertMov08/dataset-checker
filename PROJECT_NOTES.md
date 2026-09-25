@@ -6,7 +6,7 @@ First step: check a CSV for empty cells and duplicate rows. Keep it small enough
 
 Next sessions:
 - Walk through `check_csv` and the example output.
-- Add the percentage of missing values for each column.
+- Add the percentage of missing values for each column. (Done)
 - Save a report as JSON.
 - Try SQL for some of the same checks.
 - Later, explore numeric outliers and compare simple rules with an ML model.
