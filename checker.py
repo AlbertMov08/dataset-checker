@@ -47,7 +47,7 @@ def check_csv(path):
                 if value.strip() == "":
                     missing[column] += 1
 
-            # Count each repeat after the first copy.
+            # Count repeats after the first copy.
             record = tuple(row)
             if record in seen:
                 duplicates += 1
@@ -83,7 +83,7 @@ def main():
 
     if args.output:
         try:
-            # Use a new file so an existing file won't get replaced.
+            # Don't overwrite an existing file.
             with open(args.output, "x", encoding="utf-8") as file:
                 json.dump(report, file, indent=2)
                 file.write("\n")

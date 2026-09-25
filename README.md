@@ -1,29 +1,25 @@
-# dataset-checker
+dataset-checker
 
 A small Python tool for checking CSV files before using them in a data or ML project.
 
-Right now it counts rows, columns, empty cells, and duplicate rows. It also shows the percentage of values missing from each column. Cells with only spaces count as empty. Duplicate rows are exact matches, and only copies after the first row count. It doesn't change the file.
+It counts rows, columns, missing values, and duplicate rows. It also shows the percentage of missing values for each column and can save the counts as JSON.
+
+Empty cells and cells with only spaces count as missing. Duplicate rows have to match exactly, and only copies after the first row count. The original CSV stays the same.
 
 Run the example with Python 3:
 
-```sh
 python3 checker.py sample.csv
-```
 
-You can replace `sample.csv` with the path to your own CSV. The file should be UTF-8, comma-separated, and start with unique column names. For now, values like `NA` and `null` are treated as text.
+Replace sample.csv with your own file to check it. The file should use UTF-8, have comma-separated values, and start with a header row. Each column needs a different name. For now, NA and null are treated as text.
 
 To save the counts and column names as JSON:
 
-```sh
 python3 checker.py sample.csv --output report.json
-```
 
 The results still print in the terminal. Pick a new filename each time; existing files aren't overwritten.
 
 To run the tests:
 
-```sh
 python3 -m unittest -v
-```
 
-Next: try the same checks with SQL.
+Next step: load the sample CSV into SQLite and count the rows with a SQL query. Compare that number with the Python report.
