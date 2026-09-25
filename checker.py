@@ -1,5 +1,6 @@
 import argparse
 import csv
+import json
 import sys
 
 
@@ -63,6 +64,7 @@ def check_csv(path):
 def main():
     parser = argparse.ArgumentParser(description="Check a CSV for basic data problems.")
     parser.add_argument("path", help="CSV file to check")
+    parser.add_argument("--output", help="Save the report to a new JSON file")
     args = parser.parse_args()
 
     try:
@@ -78,6 +80,17 @@ def main():
     for column, count in report["missing"].items():
         missing_percent = percentage(count, report["rows"])
         print(f"  {column}: {count} ({missing_percent:.1f}%)")
+
+    if args.output:
+        try:
+            # Use a new file so an existing file won't get replaced.
+            with open(args.output, "x", encoding="utf-8") as file:
+                json.dump(report, file, indent=2)
+                file.write("\n")
+        except OSError as error:
+            print(f"Could not save the report: {error}", file=sys.stderr)
+            return 1
+        print(f"Report saved to {args.output}")
     return 0
 
 

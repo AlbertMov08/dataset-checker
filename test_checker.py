@@ -1,4 +1,7 @@
 import csv
+import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -73,6 +76,47 @@ class CheckerTests(unittest.TestCase):
     def test_percentage(self):
         self.assertEqual(percentage(1, 4), 25.0)
         self.assertEqual(percentage(0, 0), 0.0)
+
+    def run_export(self, output):
+        return subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("checker.py")),
+             str(self.path), "--output", str(output)],
+            capture_output=True, text=True,
+        )
+
+    def test_json_export(self):
+        self.check_text("name,age\nAna,19\nSam,\nAna,19\n")
+        output = self.path.with_suffix(".json")
+        result = self.run_export(output)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("age: 1 (33.3%)", result.stdout)
+        self.assertEqual(json.loads(output.read_text(encoding="utf-8")), {
+            "rows": 3, "columns": ["name", "age"],
+            "missing": {"name": 0, "age": 1}, "duplicates": 1,
+        })
+
+    def test_export_does_not_overwrite_input(self):
+        original = "name,age\nAna,19\n"
+        self.check_text(original)
+        result = self.run_export(self.path)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Could not save the report", result.stderr)
+        self.assertEqual(self.path.read_text(encoding="utf-8"), original)
+
+    def test_export_missing_folder(self):
+        self.check_text("name,age\nAna,19\n")
+        result = self.run_export(self.path.parent / "missing" / "report.json")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Could not save the report", result.stderr)
+        self.assertNotIn("Report saved", result.stdout)
+
+    def test_invalid_csv_does_not_create_report(self):
+        self.path.write_text("name,age\nAna\n", encoding="utf-8")
+        output = self.path.with_suffix(".json")
+        result = self.run_export(output)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Could not check the file", result.stderr)
+        self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":

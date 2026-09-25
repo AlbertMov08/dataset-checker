@@ -12,10 +12,18 @@ python3 checker.py sample.csv
 
 You can replace `sample.csv` with the path to your own CSV. The file should be UTF-8, comma-separated, and start with unique column names. For now, values like `NA` and `null` are treated as text.
 
+To save the counts and column names as JSON:
+
+```sh
+python3 checker.py sample.csv --output report.json
+```
+
+The results still print in the terminal. Pick a new filename each time; existing files aren't overwritten.
+
 To run the tests:
 
 ```sh
 python3 -m unittest -v
 ```
 
-Next: save the report to a file.
+Next: try the same checks with SQL.
