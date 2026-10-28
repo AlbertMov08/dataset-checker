@@ -164,6 +164,29 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("Could not check the file", result.stderr)
         self.assertFalse(output.exists())
 
+    def test_cli_parse_failures_preserve_input_and_do_not_create_reports(self):
+        for content in (b"name\n\xff\n", b'name,note\nAna,"unfinished',
+                        b"name,name\nAna,Sam\n", b"\n\n"):
+            with self.subTest(content=content):
+                self.path.write_bytes(content)
+                output = self.path.with_suffix(".json")
+                result = self.run_export(output)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("Could not check the file:", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(self.path.read_bytes(), content)
+                self.assertFalse(output.exists())
+
+    def test_cli_missing_input_does_not_create_a_report(self):
+        output = self.path.with_suffix(".json")
+        result = self.run_export(output)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Could not check the file:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertFalse(self.path.exists())
+        self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
