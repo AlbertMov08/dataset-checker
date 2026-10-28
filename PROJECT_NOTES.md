@@ -10,7 +10,7 @@ Next sessions:
 - Add the percentage of missing values for each column. (Done)
 - Save a report as JSON. (Done: use `--output report.json`.)
 - Load the sample CSV into SQLite, count the rows with SQL, and compare with the Python report. (Done: run `python3 sql_check.py`.)
-- Add minimum, maximum, and average values for numerical columns.
+- Add minimum, maximum, and average values for numerical columns. (Done: use --numeric-column age; repeat the option for more columns. Blank cells are skipped and other nonnumeric values are rejected.)
 - Later, explore numeric outliers and compare simple rules with an ML model.
 
 First-version scope (set September 26, 2026):
@@ -19,12 +19,12 @@ First-version scope (set September 26, 2026):
 2. Missing-value percentages. Done.
 3. JSON export. Done.
 4. SQLite row-count example. Done; uses the sample's name, age, city columns.
-5. Numerical summaries. Next.
-6. Statistical outlier checks. Planned.
+5. Numerical summaries. Done; only explicitly chosen columns are summarized.
+6. Statistical outlier checks. Next.
 7. Small ML anomaly-detection comparison with reviewed examples and limitations. Planned.
 8. Final example walkthrough, reproducible results, and README review. Planned.
 
-Progress is 4 of 8 milestones, or 50% by milestone count. These aren't equal amounts of work, so this doesn't measure time remaining or personal learning progress. Keep this scope stable and update completed items as they are finished. The other two project ideas below are separate projects.
+Progress is 5 of 8 milestones, or 62.5% by milestone count. These aren't equal amounts of work, so this doesn't measure time remaining or personal learning progress. Keep this scope stable and update completed items as they are finished. The other two project ideas below are separate projects.
 
 Other project ideas to come back to:
 

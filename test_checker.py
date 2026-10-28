@@ -77,6 +77,52 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(percentage(1, 4), 25.0)
         self.assertEqual(percentage(0, 0), 0.0)
 
+    def test_numeric_summary_skips_missing_values_and_keeps_repeated_rows(self):
+        self.check_text("name,age\nAna,19\nSam,\nAna,19\nLee,22\n")
+        report = check_csv(self.path, ["age"])
+        self.assertEqual(report["numeric"], {
+            "age": {"count": 3, "min": 19, "max": 22, "mean": 20},
+        })
+        self.assertEqual(report["missing"]["age"], 1)
+        self.assertEqual(report["duplicates"], 1)
+
+    def test_numeric_empty_columns_have_null_statistics(self):
+        for text in ("age\n", 'age\n" "\n'):
+            with self.subTest(text=text):
+                self.check_text(text)
+                self.assertEqual(check_csv(self.path, ["age"])["numeric"]["age"], {
+                    "count": 0, "min": None, "max": None, "mean": None,
+                })
+
+    def test_numeric_columns_reject_missing_headers_and_invalid_values(self):
+        self.check_text("age\n19\n")
+        with self.assertRaisesRegex(ValueError, "not in the header"):
+            check_csv(self.path, ["height"])
+        for value in ("unknown", "NaN", "inf", "-inf", "1e400"):
+            with self.subTest(value=value):
+                self.check_text(f"age\n{value}\n")
+                with self.assertRaisesRegex(ValueError, "Line 2: 'age' needs a finite number"):
+                    check_csv(self.path, ["age"])
+
+    def test_multiple_numeric_columns_and_large_finite_means(self):
+        self.check_text("x,y\n1e308,-2.5\n1e308,1.5\n")
+        report = check_csv(self.path, ["x", "y", "x"])
+        self.assertEqual(report["numeric"]["x"]["mean"], 1e308)
+        self.assertEqual(report["numeric"]["y"]["mean"], -0.5)
+        json.dumps(report, allow_nan=False)
+
+    def test_numeric_cli_prints_and_exports_summary(self):
+        self.check_text("age,height\n19,160\n,170\n21,180\n")
+        output = self.path.with_suffix(".json")
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("checker.py")),
+             str(self.path), "--numeric-column", "age", "--numeric-column", "height",
+             "--output", str(output)], capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Numeric age: min=19, max=21, mean=20 (2 values)", result.stdout)
+        self.assertEqual(json.loads(output.read_text())["numeric"]["height"]["mean"], 170)
+
     def run_export(self, output):
         return subprocess.run(
             [sys.executable, str(Path(__file__).with_name("checker.py")),

@@ -1,6 +1,8 @@
 import argparse
 import csv
 import json
+import math
+from statistics import mean
 import sys
 
 
@@ -10,7 +12,7 @@ def percentage(part, total):
     return part / total * 100
 
 
-def check_csv(path):
+def check_csv(path, numeric_columns=()):
     """Count missing cells and repeated rows in a CSV."""
     with open(path, newline="", encoding="utf-8-sig") as file:
         reader = csv.reader(file, strict=True)
@@ -27,6 +29,10 @@ def check_csv(path):
             raise ValueError("Each column needs a name.")
         if len(set(columns)) != len(columns):
             raise ValueError("Column names must be different.")
+        numeric_values = {column: [] for column in numeric_columns}
+        for column in numeric_values:
+            if column not in columns:
+                raise ValueError(f"Numeric column {column!r} is not in the header.")
 
         missing = dict.fromkeys(columns, 0)
         seen = set()
@@ -46,6 +52,16 @@ def check_csv(path):
             for column, value in zip(columns, row):
                 if value.strip() == "":
                     missing[column] += 1
+                elif column in numeric_values:
+                    try:
+                        number = float(value)
+                        if not math.isfinite(number):
+                            raise ValueError
+                    except ValueError as error:
+                        raise ValueError(
+                            f"Line {reader.line_num}: {column!r} needs a finite number."
+                        ) from error
+                    numeric_values[column].append(number)
 
             # Count repeats after the first copy.
             record = tuple(row)
@@ -53,22 +69,37 @@ def check_csv(path):
                 duplicates += 1
             seen.add(record)
 
-    return {
+    report = {
         "rows": row_count,
         "columns": columns,
         "missing": missing,
         "duplicates": duplicates,
     }
+    if numeric_values:
+        report["numeric"] = {
+            column: {
+                "count": len(values),
+                "min": min(values) if values else None,
+                "max": max(values) if values else None,
+                "mean": mean(values) if values else None,
+            }
+            for column, values in numeric_values.items()
+        }
+    return report
 
 
 def main():
     parser = argparse.ArgumentParser(description="Check a CSV for basic data problems.")
     parser.add_argument("path", help="CSV file to check")
     parser.add_argument("--output", help="Save the report to a new JSON file")
+    parser.add_argument(
+        "--numeric-column", action="append", default=[], metavar="NAME",
+        help="Summarize a numeric column; repeat for more columns",
+    )
     args = parser.parse_args()
 
     try:
-        report = check_csv(args.path)
+        report = check_csv(args.path, args.numeric_column)
     except (OSError, ValueError, csv.Error) as error:
         print(f"Could not check the file: {error}", file=sys.stderr)
         return 1
@@ -80,6 +111,14 @@ def main():
     for column, count in report["missing"].items():
         missing_percent = percentage(count, report["rows"])
         print(f"  {column}: {count} ({missing_percent:.1f}%)")
+
+    for column, summary in report.get("numeric", {}).items():
+        if summary["count"]:
+            print(f"Numeric {column}: min={summary['min']:g}, "
+                  f"max={summary['max']:g}, mean={summary['mean']:g} "
+                  f"({summary['count']} values)")
+        else:
+            print(f"Numeric {column}: no numeric values")
 
     if args.output:
         try:
