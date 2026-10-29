@@ -24,6 +24,12 @@ python3 checker.py sample.csv --numeric-column age
 
 Repeat --numeric-column for more columns. Empty cells are excluded from these summaries, while repeated rows still count. A column with no numbers has null statistics in JSON. Other nonnumeric values, including NA, NaN, and infinity, stop the check with a line number. Nonzero values too small for Python to represent as a float also stop the check instead of becoming zero. Columns are summarized only when you name them, so numeric-looking identifiers stay text by default. Add --output report.json to include the summaries in a JSON report.
 
+To count potential outliers in a numerical column:
+
+python3 checker.py sample.csv --outlier-column age
+
+This also includes the numerical summary. Repeat the option for more columns. The check uses inclusive quartiles and flags values strictly outside Q1 - 1.5 IQR and Q3 + 1.5 IQR, where IQR is Q3 - Q1. At least four nonmissing values are required; smaller samples return null. Repeated rows count, and no values are removed. A flag is a reason to review a value, not proof of an error. Small or skewed samples can give misleading results. JSON reports include potential_outliers for the chosen columns.
+
 There's also a small SQL example for sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs.
 
 python3 sql_check.py
@@ -32,6 +38,6 @@ To run the tests:
 
 python3 -m unittest -v
 
-First-version progress: 5 of 8 milestones are done (62.5% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, and numerical summaries are done. A statistical outlier check, a small ML comparison, and a final example walkthrough are still planned. This isn't an estimate of time remaining; the later steps will take more work.
+First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. A small ML comparison and a final example walkthrough are still planned. This isn't an estimate of time remaining; the later steps will take more work.
 
-Next step: add a statistical outlier check for a chosen numerical column and explain its limitations.
+Next step: compare the IQR flags with manually reviewed made-up examples before adding an ML comparison.

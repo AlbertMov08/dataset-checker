@@ -1,9 +1,9 @@
 import argparse
 import csv
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext
 import json
 import math
-from statistics import mean
+from statistics import mean, quantiles
 import sys
 
 
@@ -13,7 +13,20 @@ def percentage(part, total):
     return part / total * 100
 
 
-def check_csv(path, numeric_columns=()):
+def outlier_count(values):
+    """Count values outside inclusive quartiles plus 1.5 times their range."""
+    if len(values) < 4:
+        return None
+    # Decimal keeps fence arithmetic finite even for extreme float values.
+    with localcontext() as context:
+        context.prec = 1100
+        numbers = [Decimal(value) for value in values]
+        lower, _, upper = quantiles(numbers, n=4, method="inclusive")
+        margin = (upper - lower) * Decimal("1.5")
+        return sum(value < lower - margin or value > upper + margin for value in numbers)
+
+
+def check_csv(path, numeric_columns=(), outlier_columns=()):
     """Count missing cells and repeated rows in a CSV."""
     with open(path, newline="", encoding="utf-8-sig") as file:
         reader = csv.reader(file, strict=True)
@@ -30,7 +43,8 @@ def check_csv(path, numeric_columns=()):
             raise ValueError("Each column needs a name.")
         if len(set(columns)) != len(columns):
             raise ValueError("Column names must be different.")
-        numeric_values = {column: [] for column in numeric_columns}
+        outlier_columns = dict.fromkeys(outlier_columns)
+        numeric_values = {column: [] for column in (*numeric_columns, *outlier_columns)}
         for column in numeric_values:
             if column not in columns:
                 raise ValueError(f"Numeric column {column!r} is not in the header.")
@@ -91,6 +105,8 @@ def check_csv(path, numeric_columns=()):
             }
             for column, values in numeric_values.items()
         }
+        for column in outlier_columns:
+            report["numeric"][column]["potential_outliers"] = outlier_count(numeric_values[column])
     return report
 
 
@@ -102,10 +118,14 @@ def main():
         "--numeric-column", action="append", default=[], metavar="NAME",
         help="Summarize a numeric column; repeat for more columns",
     )
+    parser.add_argument(
+        "--outlier-column", action="append", default=[], metavar="NAME",
+        help="Count potential outliers using the 1.5 IQR rule; repeat for more columns",
+    )
     args = parser.parse_args()
 
     try:
-        report = check_csv(args.path, args.numeric_column)
+        report = check_csv(args.path, args.numeric_column, args.outlier_column)
     except (OSError, ValueError, csv.Error) as error:
         print(f"Could not check the file: {error}", file=sys.stderr)
         return 1
@@ -125,6 +145,11 @@ def main():
                   f"({summary['count']} values)")
         else:
             print(f"Numeric {column}: no numeric values")
+
+        if "potential_outliers" in summary:
+            count = summary["potential_outliers"]
+            detail = "needs at least 4 values" if count is None else str(count)
+            print(f"Potential outliers {column}: {detail} (1.5 IQR rule)")
 
     if args.output:
         try:

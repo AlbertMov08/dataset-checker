@@ -137,6 +137,33 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("Numeric age: min=19, max=21, mean=20 (2 values)", result.stdout)
         self.assertEqual(json.loads(output.read_text())["numeric"]["height"]["mean"], 170)
 
+    def test_outlier_counts_are_opt_in_and_do_not_remove_rows(self):
+        self.check_text("x\n1\n2\n2\n3\n100\n")
+        self.assertNotIn("numeric", check_csv(self.path))
+        report = check_csv(self.path, outlier_columns=["x"])
+        self.assertEqual(report["rows"], 5)
+        self.assertEqual(report["numeric"]["x"]["potential_outliers"], 1)
+        self.assertEqual(report["numeric"]["x"]["count"], 5)
+
+    def test_outlier_small_constant_and_extreme_samples(self):
+        for values, expected in (([], None), ([1, 2, 3], None),
+                                 ([2]*4, 0), ([0, 1, 1, 2], 0),
+                                 ([-1e308, 0, 0, 0, 1e308], 2)):
+            with self.subTest(values=values):
+                self.check_text("x\n" + "".join(f"{value}\n" for value in values))
+                report = check_csv(self.path, outlier_columns=["x"])
+                self.assertEqual(report["numeric"]["x"]["potential_outliers"], expected)
+                json.dumps(report, allow_nan=False)
+
+    def test_outlier_cli(self):
+        self.check_text("x\n1\n2\n2\n3\n100\n")
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("checker.py")),
+             str(self.path), "--outlier-column", "x"], capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Potential outliers x: 1 (1.5 IQR rule)", result.stdout)
+
     def run_export(self, output):
         return subprocess.run(
             [sys.executable, str(Path(__file__).with_name("checker.py")),

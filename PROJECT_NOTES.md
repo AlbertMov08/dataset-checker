@@ -20,11 +20,11 @@ First-version scope (set September 26, 2026):
 3. JSON export. Done.
 4. SQLite row-count example. Done; uses the sample's name, age, city columns.
 5. Numerical summaries. Done; only explicitly chosen columns are summarized.
-6. Statistical outlier checks. Next.
+6. Statistical outlier checks. Done: opt-in inclusive 1.5 IQR counts.
 7. Small ML anomaly-detection comparison with reviewed examples and limitations. Planned.
 8. Final example walkthrough, reproducible results, and README review. Planned.
 
-Progress is 5 of 8 milestones, or 62.5% by milestone count. These aren't equal amounts of work, so this doesn't measure time remaining or personal learning progress. Keep this scope stable and update completed items as they are finished. The other two project ideas below are separate projects.
+Progress is 6 of 8 milestones, or 75% by milestone count. These aren't equal amounts of work, so this doesn't measure time remaining or personal learning progress. Keep this scope stable and update completed items as they are finished. The other two project ideas below are separate projects.
 
 Other project ideas to come back to:
 
