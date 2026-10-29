@@ -98,7 +98,7 @@ class CheckerTests(unittest.TestCase):
         self.check_text("age\n19\n")
         with self.assertRaisesRegex(ValueError, "not in the header"):
             check_csv(self.path, ["height"])
-        for value in ("unknown", "NaN", "inf", "-inf", "1e400"):
+        for value in ("unknown", "NaN", "inf", "-inf", "1e400", "1e-9999999999999999999999"):
             with self.subTest(value=value):
                 self.check_text(f"age\n{value}\n")
                 with self.assertRaisesRegex(ValueError, "Line 2: 'age' needs a finite number"):
@@ -110,6 +110,20 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["numeric"]["x"]["mean"], 1e308)
         self.assertEqual(report["numeric"]["y"]["mean"], -0.5)
         json.dumps(report, allow_nan=False)
+
+    def test_numeric_underflow_is_reported_instead_of_becoming_zero(self):
+        for value in ("1e-400", "-1e-400"):
+            with self.subTest(value=value):
+                self.check_text(f"amount\n{value}\n")
+                with self.assertRaisesRegex(ValueError, "Line 2:.*too small"):
+                    check_csv(self.path, ["amount"])
+
+    def test_small_representable_numbers_and_zero_remain_valid(self):
+        self.check_text("amount\n5e-324\n0e-400\n-0.0\n")
+        summary = check_csv(self.path, ["amount"])["numeric"]["amount"]
+        self.assertEqual(summary["count"], 3)
+        self.assertEqual(summary["max"], 5e-324)
+        self.assertEqual(summary["min"], 0)
 
     def test_numeric_cli_prints_and_exports_summary(self):
         self.check_text("age,height\n19,160\n,170\n21,180\n")

@@ -1,5 +1,6 @@
 import argparse
 import csv
+from decimal import Decimal, InvalidOperation
 import json
 import math
 from statistics import mean
@@ -57,10 +58,15 @@ def check_csv(path, numeric_columns=()):
                         number = float(value)
                         if not math.isfinite(number):
                             raise ValueError
-                    except ValueError as error:
+                        underflow = number == 0 and not Decimal(value).is_zero()
+                    except (ValueError, InvalidOperation) as error:
                         raise ValueError(
                             f"Line {reader.line_num}: {column!r} needs a finite number."
                         ) from error
+                    if underflow:
+                        raise ValueError(
+                            f"Line {reader.line_num}: {column!r} is too small to represent."
+                        )
                     numeric_values[column].append(number)
 
             # Count repeats after the first copy.

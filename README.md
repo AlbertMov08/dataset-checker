@@ -22,7 +22,7 @@ To get the minimum, maximum, and average for a numerical column:
 
 python3 checker.py sample.csv --numeric-column age
 
-Repeat --numeric-column for more columns. Empty cells are excluded from these summaries, while repeated rows still count. A column with no numbers has null statistics in JSON. Other nonnumeric values, including NA, NaN, and infinity, stop the check with a line number. Columns are summarized only when you name them, so numeric-looking identifiers stay text by default. Add --output report.json to include the summaries in a JSON report.
+Repeat --numeric-column for more columns. Empty cells are excluded from these summaries, while repeated rows still count. A column with no numbers has null statistics in JSON. Other nonnumeric values, including NA, NaN, and infinity, stop the check with a line number. Nonzero values too small for Python to represent as a float also stop the check instead of becoming zero. Columns are summarized only when you name them, so numeric-looking identifiers stay text by default. Add --output report.json to include the summaries in a JSON report.
 
 There's also a small SQL example for sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs.
 
