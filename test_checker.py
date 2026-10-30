@@ -163,6 +163,13 @@ class CheckerTests(unittest.TestCase):
                 self.assertEqual(report["numeric"]["x"]["potential_outliers"], expected)
                 json.dumps(report, allow_nan=False)
 
+    def test_outlier_fences_include_endpoints_but_flag_values_beyond_them(self):
+        for last, expected in (("6", 0), ("6.000000000000001", 1)):
+            with self.subTest(last=last):
+                self.check_text(f"x\n0\n1\n2\n3\n{last}\n")
+                summary = check_csv(self.path, outlier_columns=["x"])["numeric"]["x"]
+                self.assertEqual(summary["potential_outliers"], expected)
+
     def test_outlier_cli(self):
         self.check_text("x\n1\n2\n2\n3\n100\n")
         result = subprocess.run(

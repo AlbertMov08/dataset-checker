@@ -11,7 +11,8 @@ Next sessions:
 - Save a report as JSON. (Done: use `--output report.json`.)
 - Load the sample CSV into SQLite, count the rows with SQL, and compare with the Python report. (Done: run `python3 sql_check.py`.)
 - Add minimum, maximum, and average values for numerical columns. (Done: use --numeric-column age; repeat the option for more columns. Blank cells are skipped and other nonnumeric values are rejected.)
-- Later, explore numeric outliers and compare simple rules with an ML model.
+- Review the IQR calculation on made-up values. (Done: outlier_example.csv and the README walkthrough.)
+- Later, compare simple rules with an ML model.
 
 First-version scope (set September 26, 2026):
 

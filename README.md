@@ -30,6 +30,17 @@ python3 checker.py sample.csv --outlier-column age
 
 This also includes the numerical summary. Repeat the option for more columns. The check uses inclusive quartiles and flags values strictly outside Q1 - 1.5 IQR and Q3 + 1.5 IQR, where IQR is Q3 - Q1. At least four nonmissing values are required; smaller samples return null. Repeated rows count, and no values are removed. A flag is a reason to review a value, not proof of an error. Small or skewed samples can give misleading results. JSON reports include potential_outliers for the chosen columns.
 
+A made-up outlier example is included for reviewing the rule:
+
+python3 checker.py outlier_example.csv --outlier-column amount
+
+It has five rows, one duplicate, no missing cells, and an average amount of 21.6.
+The sorted amounts are 1, 2, 2, 3, 100. Inclusive Q1 is 2 and Q3 is 3, so the
+fences are 0.5 and 4.5. Only 100 is flagged. If 100 represents a valid large
+purchase, the flag is not a data error. The repeated 2 is counted in the
+quartiles but flagged only as a duplicate row. Review what the values mean
+before removing anything. Values exactly on a fence are not flagged.
+
 There's also a small SQL example for sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs.
 
 python3 sql_check.py
@@ -40,4 +51,4 @@ python3 -m unittest -v
 
 First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. A small ML comparison and a final example walkthrough are still planned. This isn't an estimate of time remaining; the later steps will take more work.
 
-Next step: compare the IQR flags with manually reviewed made-up examples before adding an ML comparison.
+Next step: choose a small, clearly labeled synthetic dataset with reviewed normal and anomalous cases for an ML comparison.

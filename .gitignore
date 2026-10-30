@@ -7,3 +7,5 @@ data/
 *.csv
 !sample.csv
 report.json
+
+!outlier_example.csv
