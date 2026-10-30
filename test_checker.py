@@ -60,6 +60,14 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["rows"], 2)
         self.assertEqual(report["missing"], {"name": 0, "note": 0})
 
+    def test_multiline_cells_keep_physical_line_numbers_in_errors(self):
+        self.check_text('name,age\n"two\nlines",20\nSam,nope\n')
+        with self.assertRaisesRegex(ValueError, "Line 4: 'age' needs a finite number"):
+            check_csv(self.path, ["age"])
+        self.path.write_text('name,age\n"two\nlines",20\nSam\n', encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Line 4: expected 2 values, got 1"):
+            check_csv(self.path)
+
     def test_header_spaces_and_bom(self):
         report = self.check_text("\ufeff name , age \nAna,19\n")
         self.assertEqual(report["columns"], ["name", "age"])
