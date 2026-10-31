@@ -1,3 +1,4 @@
+import csv
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +23,22 @@ class SqlCheckTests(unittest.TestCase):
                 with self.subTest(text=text):
                     path.write_text(text, encoding="utf-8")
                     self.assertEqual(compare_row_counts(path), expected)
+
+    def test_invalid_csv_is_rejected_before_sqlite_loading(self):
+        examples = [
+            ("name,age,city\nAna,20\n", ValueError),
+            ("name,age,city\nAna,20,Oakland,extra\n", ValueError),
+            ('name,age,city\nAna,20,"unfinished', csv.Error),
+            ("name,age,city\nAna,20,Oakland\n".encode() + b"\xff", UnicodeError),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "invalid.csv"
+            for content, error in examples:
+                raw = content.encode() if isinstance(content, str) else content
+                path.write_bytes(raw)
+                with self.subTest(raw=raw), self.assertRaises(error):
+                    compare_row_counts(path)
+                self.assertEqual(path.read_bytes(), raw)
 
     def test_wrong_columns(self):
         with tempfile.TemporaryDirectory() as folder:
