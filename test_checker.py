@@ -205,6 +205,27 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("Could not save the report", result.stderr)
         self.assertEqual(self.path.read_text(encoding="utf-8"), original)
 
+    def test_export_refuses_symlinks_without_touching_their_targets(self):
+        self.check_text("name,age\nAna,19\n")
+        output = self.path.with_suffix(".json")
+        target = self.path.parent / "target.json"
+        for existing in (False, True):
+            with self.subTest(existing=existing):
+                if existing:
+                    target.write_bytes(b"preserve this report")
+                output.symlink_to(target)
+                result = self.run_export(output)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("Could not save the report", result.stderr)
+                self.assertNotIn("Report saved", result.stdout)
+                self.assertTrue(output.is_symlink())
+                self.assertEqual(output.readlink(), target)
+                if existing:
+                    self.assertEqual(target.read_bytes(), b"preserve this report")
+                else:
+                    self.assertFalse(target.exists())
+                output.unlink()
+
     def test_export_missing_folder(self):
         self.check_text("name,age\nAna,19\n")
         result = self.run_export(self.path.parent / "missing" / "report.json")
