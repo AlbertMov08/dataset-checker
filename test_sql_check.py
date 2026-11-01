@@ -40,6 +40,21 @@ class SqlCheckTests(unittest.TestCase):
                     compare_row_counts(path)
                 self.assertEqual(path.read_bytes(), raw)
 
+    def test_sql_text_values_are_bound_without_changing_the_source(self):
+        rows = [
+            ["name", "age", "city"],
+            ["O'Neil", "20", "City, West"],
+            ["'); DROP TABLE people; --", "", "two\nlines"],
+            ["Zoë", "21", "東京"],
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "quoted.csv"
+            with path.open("w", newline="", encoding="utf-8") as stream:
+                csv.writer(stream).writerows(rows)
+            original = path.read_bytes()
+            self.assertEqual(compare_row_counts(path), (3, 3))
+            self.assertEqual(path.read_bytes(), original)
+
     def test_wrong_columns(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "other.csv"
