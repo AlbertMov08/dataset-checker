@@ -255,6 +255,33 @@ class CheckerTests(unittest.TestCase):
                 self.assertEqual(self.path.read_bytes(), content)
                 self.assertFalse(output.exists())
 
+    def test_numeric_cli_failures_preserve_input_and_existing_reports(self):
+        output = self.path.with_suffix(".json")
+        for option in ("--numeric-column", "--outlier-column"):
+            for value, column in (("bad", "amount"), ("NaN", "amount"),
+                                  ("1e-400", "amount"), ("1", "missing")):
+                for existing in (False, True):
+                    with self.subTest(option=option, value=value, column=column, existing=existing):
+                        original = f"amount\n{value}\n".encode()
+                        self.path.write_bytes(original)
+                        if existing:
+                            output.write_bytes(b"previous report")
+                        result = subprocess.run(
+                            [sys.executable, str(Path(__file__).with_name("checker.py")),
+                             str(self.path), option, column, "--output", str(output)],
+                            capture_output=True, text=True,
+                        )
+                        self.assertEqual(result.returncode, 1)
+                        self.assertIn("Could not check the file:", result.stderr)
+                        self.assertNotIn("Traceback", result.stderr)
+                        self.assertEqual(result.stdout, "")
+                        self.assertEqual(self.path.read_bytes(), original)
+                        if existing:
+                            self.assertEqual(output.read_bytes(), b"previous report")
+                            output.unlink()
+                        else:
+                            self.assertFalse(output.exists())
+
     def test_cli_missing_input_does_not_create_a_report(self):
         output = self.path.with_suffix(".json")
         result = self.run_export(output)
