@@ -76,6 +76,21 @@ class CheckerTests(unittest.TestCase):
         with self.assertRaises(csv.Error):
             self.check_text('name,note\nAna,"unfinished')
 
+    def test_csv_parser_errors_include_the_physical_line(self):
+        for text, line in (('"unfinished', 1),
+                           ('name,note\nAna,"two\nunfinished', 3),
+                           ('name\n' + 'x' * (csv.field_size_limit() + 1), 2)):
+            with self.subTest(line=line):
+                with self.assertRaisesRegex(csv.Error, f"Line {line}:"):
+                    self.check_text(text)
+                original = self.path.read_bytes()
+                result = self.run_export(self.path.with_suffix(".json"))
+                self.assertEqual(result.returncode, 1)
+                self.assertIn(f"Line {line}:", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertFalse(self.path.with_suffix(".json").exists())
+
     def test_invalid_encoding(self):
         self.path.write_bytes(b"name\n\xff\n")
         with self.assertRaises(UnicodeDecodeError):

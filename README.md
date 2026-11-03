@@ -51,4 +51,6 @@ python3 -m unittest -v
 
 First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. A small ML comparison and a final example walkthrough are still planned. This isn't an estimate of time remaining; the later steps will take more work.
 
+Malformed CSV errors include the physical line number, including quoted cells that span lines.
+
 Next step: choose a small, clearly labeled synthetic dataset with reviewed normal and anomalous cases for an ML comparison.

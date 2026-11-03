@@ -26,12 +26,20 @@ def outlier_count(values):
         return sum(value < lower - margin or value > upper + margin for value in numbers)
 
 
+def csv_rows(reader):
+    try:
+        yield from reader
+    except csv.Error as error:
+        raise csv.Error(f"Line {reader.line_num}: {error}") from error
+
+
 def check_csv(path, numeric_columns=(), outlier_columns=()):
     """Count missing cells and repeated rows in a CSV."""
     with open(path, newline="", encoding="utf-8-sig") as file:
         reader = csv.reader(file, strict=True)
+        rows = csv_rows(reader)
         columns = []
-        for row in reader:
+        for row in rows:
             if row:
                 columns = row
                 break
@@ -54,7 +62,7 @@ def check_csv(path, numeric_columns=(), outlier_columns=()):
         row_count = 0
         duplicates = 0
 
-        for row in reader:
+        for row in rows:
             if not row:
                 continue
             if len(row) != len(columns):
