@@ -194,6 +194,29 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Potential outliers x: 1 (1.5 IQR rule)", result.stdout)
 
+    def test_outlier_export_distinguishes_unavailable_from_zero(self):
+        output = self.path.with_suffix(".json")
+        for values, expected in (([], None), ([2, 2, 2], None),
+                                 ([2, 2, 2, 2], 0), ([1, 2, 2, 3, 100], 1)):
+            with self.subTest(values=values):
+                original = "x,y\n" + "".join(f"{value},\n" for value in values)
+                self.path.write_text(original, encoding="utf-8")
+                result = subprocess.run(
+                    [sys.executable, str(Path(__file__).with_name("checker.py")),
+                     str(self.path), "--outlier-column", "x", "--numeric-column", "x",
+                     "--outlier-column", "x", "--output", str(output)],
+                    capture_output=True, text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(output.read_text(encoding="utf-8"))
+                self.assertEqual(report["numeric"]["x"]["potential_outliers"], expected)
+                self.assertEqual(report["numeric"]["x"]["count"], len(values))
+                self.assertEqual(report["rows"], len(values))
+                self.assertEqual(report["missing"]["y"], len(values))
+                self.assertEqual(result.stdout.count("Potential outliers x:"), 1)
+                self.assertEqual(self.path.read_text(encoding="utf-8"), original)
+                output.unlink()
+
     def run_export(self, output):
         return subprocess.run(
             [sys.executable, str(Path(__file__).with_name("checker.py")),
