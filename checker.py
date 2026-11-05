@@ -23,7 +23,9 @@ def outlier_count(values):
         numbers = [Decimal(value) for value in values]
         lower, _, upper = quantiles(numbers, n=4, method="inclusive")
         margin = (upper - lower) * Decimal("1.5")
-        return sum(value < lower - margin or value > upper + margin for value in numbers)
+        lower_fence = lower - margin
+        upper_fence = upper + margin
+        return sum(value < lower_fence or value > upper_fence for value in numbers)
 
 
 def csv_rows(reader):
