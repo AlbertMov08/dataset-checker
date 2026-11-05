@@ -40,6 +40,13 @@ class SqlCheckTests(unittest.TestCase):
                     compare_row_counts(path)
                 self.assertEqual(path.read_bytes(), raw)
 
+    def test_bom_and_crlf_do_not_change_logical_row_counts(self):
+        text = '\ufeff\r\n name , age , city \r\nAna,20,"two\r\nlines"\r\nSam,,Oakland'
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "windows.csv"
+            path.write_bytes(text.encode("utf-8"))
+            self.assertEqual(compare_row_counts(path), (2, 2))
+
     def test_sql_text_values_are_bound_without_changing_the_source(self):
         rows = [
             ["name", "age", "city"],
