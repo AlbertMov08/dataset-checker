@@ -20,9 +20,10 @@ def compare_row_counts(path):
                 if row:
                     break
 
-            for row in reader:
-                if row:
-                    connection.execute("INSERT INTO people VALUES (?, ?, ?)", row)
+            connection.executemany(
+                "INSERT INTO people VALUES (?, ?, ?)",
+                (row for row in reader if row),
+            )
 
         sql_count = connection.execute("SELECT COUNT(*) FROM people").fetchone()[0]
     finally:
