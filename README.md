@@ -53,4 +53,6 @@ First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV
 
 Malformed CSV errors include the physical line number, including quoted cells that span lines.
 
+Zero values in scientific notation remain valid even when the exponent is very large.
+
 Next step: choose a small, clearly labeled synthetic dataset with reviewed normal and anomalous cases for an ML comparison.

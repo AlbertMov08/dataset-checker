@@ -82,7 +82,9 @@ def check_csv(path, numeric_columns=(), outlier_columns=()):
                         number = float(value)
                         if not math.isfinite(number):
                             raise ValueError
-                        underflow = number == 0 and not Decimal(value).is_zero()
+                        # The exponent changes the scale, but never makes a mantissa zero.
+                        mantissa = value.lower().partition("e")[0]
+                        underflow = number == 0 and not Decimal(mantissa).is_zero()
                     except (ValueError, InvalidOperation) as error:
                         raise ValueError(
                             f"Line {reader.line_num}: {column!r} needs a finite number."
