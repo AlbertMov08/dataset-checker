@@ -1,6 +1,6 @@
 import argparse
 import csv
-from decimal import Decimal, InvalidOperation, localcontext
+from decimal import Context, Decimal, InvalidOperation, localcontext
 import json
 import math
 from statistics import mean, quantiles
@@ -18,8 +18,7 @@ def outlier_count(values):
     if len(values) < 4:
         return None
     # Decimal keeps fence arithmetic finite even for extreme float values.
-    with localcontext() as context:
-        context.prec = 1100
+    with localcontext(Context(prec=1100)):
         numbers = [Decimal(value) for value in values]
         lower, _, upper = quantiles(numbers, n=4, method="inclusive")
         margin = (upper - lower) * Decimal("1.5")

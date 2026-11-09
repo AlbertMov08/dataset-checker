@@ -1,4 +1,5 @@
 import csv
+from decimal import Context, localcontext
 import json
 import subprocess
 import sys
@@ -184,6 +185,12 @@ class CheckerTests(unittest.TestCase):
                 self.check_text(f"x\n0\n1\n2\n3\n{last}\n")
                 summary = check_csv(self.path, outlier_columns=["x"])["numeric"]["x"]
                 self.assertEqual(summary["potential_outliers"], expected)
+
+    def test_outlier_fences_do_not_inherit_decimal_exponent_limits(self):
+        self.path.write_text("amount\n1e-20\n2e-20\n2e-20\n3e-20\n1e-18\n", encoding="utf-8")
+        with localcontext(Context(Emin=-5, Emax=5)):
+            report = check_csv(self.path, outlier_columns=["amount"])
+        self.assertEqual(report["numeric"]["amount"]["potential_outliers"], 1)
 
     def test_outlier_cli(self):
         self.check_text("x\n1\n2\n2\n3\n100\n")
