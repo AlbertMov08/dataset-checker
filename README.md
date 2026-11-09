@@ -47,6 +47,13 @@ The example uses executemany to pass rows to one parameterized INSERT statement 
 
 python3 sql_check.py
 
+Pass a path to check another file with the same three columns.
+
+python3 sql_check.py people.csv
+
+Both counts include duplicate rows and rows with empty cells. Matching counts
+only show that the two readers counted the same number of rows.
+
 To run the tests:
 
 python3 -m unittest -v

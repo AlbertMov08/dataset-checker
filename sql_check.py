@@ -1,5 +1,7 @@
+import argparse
 import csv
 import sqlite3
+import sys
 from pathlib import Path
 
 from checker import check_csv
@@ -32,9 +34,21 @@ def compare_row_counts(path):
     return report["rows"], sql_count
 
 
-if __name__ == "__main__":
-    sample = Path(__file__).with_name("sample.csv")
-    python_count, sql_count = compare_row_counts(sample)
+def main():
+    parser = argparse.ArgumentParser(description="Compare CSV and SQLite row counts.")
+    parser.add_argument("path", nargs="?", type=Path, default=Path(__file__).with_name("sample.csv"),
+                        help="CSV with name, age, city columns (default: sample.csv)")
+    args = parser.parse_args()
+    try:
+        python_count, sql_count = compare_row_counts(args.path)
+    except (OSError, ValueError, csv.Error, sqlite3.Error) as error:
+        print(f"Could not compare row counts: {error}", file=sys.stderr)
+        return 1
     print(f"Python row count: {python_count}")
     print(f"SQLite row count: {sql_count}")
     print(f"Counts match: {python_count == sql_count}")
+    return int(python_count != sql_count)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

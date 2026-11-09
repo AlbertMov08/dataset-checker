@@ -1,4 +1,6 @@
 import csv
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -61,6 +63,21 @@ class SqlCheckTests(unittest.TestCase):
             original = path.read_bytes()
             self.assertEqual(compare_row_counts(path), (3, 3))
             self.assertEqual(path.read_bytes(), original)
+
+    def test_cli_accepts_a_csv_path_and_reports_invalid_input(self):
+        script = Path(__file__).with_name("sql_check.py")
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "people.csv"
+            path.write_text("name,age,city\nAna,20,Oakland\n", encoding="utf-8")
+            command = [sys.executable, str(script), str(path)]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("SQLite row count: 1", result.stdout)
+            path.write_text("name,age,city\nAna,20\n", encoding="utf-8")
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Line 2: expected 3 values", result.stderr)
+            self.assertEqual(result.stdout, "")
 
     def test_wrong_columns(self):
         with tempfile.TemporaryDirectory() as folder:
