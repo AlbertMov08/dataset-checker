@@ -10,6 +10,9 @@ Run the example with Python 3:
 
 python3 checker.py sample.csv
 
+The sample has four rows and one duplicate. Age and city each have one missing
+value, so both show 25.0%. The duplicate still counts toward the four rows.
+
 Replace sample.csv with your own file to check it. The file should use UTF-8, have comma-separated values, and start with a header row. Each column needs a different name. For now, NA and null are treated as text.
 
 To save the counts and column names as JSON:
@@ -21,6 +24,9 @@ The results still print in the terminal. Pick a new filename each time; existing
 To get the minimum, maximum, and average for a numerical column:
 
 python3 checker.py sample.csv --numeric-column age
+
+The ages are 19, 19, and 20 after skipping the blank. The printed mean is
+19.3333. Both copies of 19 contribute to that mean.
 
 Repeat --numeric-column for more columns. Empty cells are excluded from these summaries, while repeated rows still count. A column with no numbers has null statistics in JSON. Other nonnumeric values, including NA, NaN, and infinity, stop the check with a line number. Nonzero values too small for Python to represent as a float also stop the check instead of becoming zero. Columns are summarized only when you name them, so numeric-looking identifiers stay text by default. Add --output report.json to include the summaries in a JSON report.
 
@@ -47,6 +53,9 @@ The example uses executemany to pass rows to one parameterized INSERT statement 
 
 python3 sql_check.py
 
+For sample.csv, Python and SQLite both count four rows and the command prints
+Counts match: True.
+
 Pass a path to check another file with the same three columns.
 
 python3 sql_check.py people.csv
@@ -58,7 +67,7 @@ To run the tests:
 
 python3 -m unittest -v
 
-First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. A small ML comparison and a final example walkthrough are still planned. This isn't an estimate of time remaining; the later steps will take more work.
+First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. The example outputs above cover the rule-based checks. The final walkthrough will also cover the planned ML comparison.
 
 Malformed CSV errors include the physical line number, including quoted cells that span lines.
 
