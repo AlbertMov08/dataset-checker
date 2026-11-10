@@ -278,6 +278,13 @@ class CheckerTests(unittest.TestCase):
         self.assertIn("Could not save the report", result.stderr)
         self.assertNotIn("Report saved", result.stdout)
 
+    def test_export_rejects_an_empty_output_path(self):
+        self.check_text("name,age\nAna,19\n")
+        result = self.run_export("")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Could not save the report", result.stderr)
+        self.assertNotIn("Report saved", result.stdout)
+
     def test_invalid_csv_does_not_create_report(self):
         self.path.write_text("name,age\nAna\n", encoding="utf-8")
         output = self.path.with_suffix(".json")

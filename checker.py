@@ -162,7 +162,7 @@ def main():
             detail = "needs at least 4 values" if count is None else str(count)
             print(f"Potential outliers {column}: {detail} (1.5 IQR rule)")
 
-    if args.output:
+    if args.output is not None:
         try:
             # Don't overwrite an existing file.
             with open(args.output, "x", encoding="utf-8") as file:

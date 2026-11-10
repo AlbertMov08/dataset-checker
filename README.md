@@ -19,7 +19,7 @@ To save the counts and column names as JSON:
 
 python3 checker.py sample.csv --output report.json
 
-The results still print in the terminal. Pick a new filename each time; existing files aren't overwritten.
+The results still print in the terminal. Give --output a new filename each time. An empty filename returns an error, and existing files are preserved.
 
 To get the minimum, maximum, and average for a numerical column:
 
