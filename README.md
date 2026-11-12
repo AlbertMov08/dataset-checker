@@ -49,7 +49,7 @@ before removing anything. Values exactly on a fence are not flagged.
 
 There's also a small SQL example for sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs. Malformed rows, unfinished quotes, and invalid UTF-8 stop the comparison without changing the CSV.
 
-The example uses executemany to pass rows to one parameterized INSERT statement as they are read.
+The example validates the CSV, rewinds the same open file, and uses executemany to pass rows to one parameterized INSERT statement.
 
 python3 sql_check.py
 

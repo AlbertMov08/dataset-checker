@@ -4,32 +4,32 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from checker import check_csv
+from checker import check_csv_stream
 
 
 def compare_row_counts(path):
-    report = check_csv(path)
-    if report["columns"] != ["name", "age", "city"]:
-        raise ValueError("This example needs name, age, city columns in that order.")
+    with open(path, newline="", encoding="utf-8-sig") as file:
+        report = check_csv_stream(file)
+        if report["columns"] != ["name", "age", "city"]:
+            raise ValueError("This example needs name, age, city columns in that order.")
 
-    connection = sqlite3.connect(":memory:")
-    try:
-        connection.execute("CREATE TABLE people (name TEXT, age TEXT, city TEXT)")
-        with open(path, newline="", encoding="utf-8-sig") as file:
-            reader = csv.reader(file, strict=True)
-            # Skip the header, including any blank lines before it.
-            for row in reader:
-                if row:
-                    break
+        # Read the same open file even if the path is replaced between passes.
+        file.seek(0)
+        reader = csv.reader(file, strict=True)
+        for row in reader:
+            if row:
+                break
 
+        connection = sqlite3.connect(":memory:")
+        try:
+            connection.execute("CREATE TABLE people (name TEXT, age TEXT, city TEXT)")
             connection.executemany(
                 "INSERT INTO people VALUES (?, ?, ?)",
                 (row for row in reader if row),
             )
-
-        sql_count = connection.execute("SELECT COUNT(*) FROM people").fetchone()[0]
-    finally:
-        connection.close()
+            sql_count = connection.execute("SELECT COUNT(*) FROM people").fetchone()[0]
+        finally:
+            connection.close()
 
     return report["rows"], sql_count
 

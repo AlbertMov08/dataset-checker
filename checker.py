@@ -37,68 +37,73 @@ def csv_rows(reader):
 def check_csv(path, numeric_columns=(), outlier_columns=()):
     """Count missing cells and repeated rows in a CSV."""
     with open(path, newline="", encoding="utf-8-sig") as file:
-        reader = csv.reader(file, strict=True)
-        rows = csv_rows(reader)
-        columns = []
-        for row in rows:
-            if row:
-                columns = row
-                break
-        if not columns:
-            raise ValueError("The file needs a header row.")
+        return check_csv_stream(file, numeric_columns, outlier_columns)
 
-        columns = [name.strip() for name in columns]
-        if "" in columns:
-            raise ValueError("Each column needs a name.")
-        if len(set(columns)) != len(columns):
-            raise ValueError("Column names must be different.")
-        outlier_columns = dict.fromkeys(outlier_columns)
-        numeric_values = {column: [] for column in (*numeric_columns, *outlier_columns)}
-        for column in numeric_values:
-            if column not in columns:
-                raise ValueError(f"Numeric column {column!r} is not in the header.")
 
-        missing = dict.fromkeys(columns, 0)
-        seen = set()
-        row_count = 0
-        duplicates = 0
+def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
+    """Check a CSV from an open text stream positioned at the header."""
+    reader = csv.reader(file, strict=True)
+    rows = csv_rows(reader)
+    columns = []
+    for row in rows:
+        if row:
+            columns = row
+            break
+    if not columns:
+        raise ValueError("The file needs a header row.")
 
-        for row in rows:
-            if not row:
-                continue
-            if len(row) != len(columns):
-                raise ValueError(
-                    f"Line {reader.line_num}: expected {len(columns)} values, "
-                    f"got {len(row)}."
-                )
+    columns = [name.strip() for name in columns]
+    if "" in columns:
+        raise ValueError("Each column needs a name.")
+    if len(set(columns)) != len(columns):
+        raise ValueError("Column names must be different.")
+    outlier_columns = dict.fromkeys(outlier_columns)
+    numeric_values = {column: [] for column in (*numeric_columns, *outlier_columns)}
+    for column in numeric_values:
+        if column not in columns:
+            raise ValueError(f"Numeric column {column!r} is not in the header.")
 
-            row_count += 1
-            for column, value in zip(columns, row):
-                if value.strip() == "":
-                    missing[column] += 1
-                elif column in numeric_values:
-                    try:
-                        number = float(value)
-                        if not math.isfinite(number):
-                            raise ValueError
-                        # The exponent changes the scale, but never makes a mantissa zero.
-                        mantissa = value.lower().partition("e")[0]
-                        underflow = number == 0 and not Decimal(mantissa).is_zero()
-                    except (ValueError, InvalidOperation) as error:
-                        raise ValueError(
-                            f"Line {reader.line_num}: {column!r} needs a finite number."
-                        ) from error
-                    if underflow:
-                        raise ValueError(
-                            f"Line {reader.line_num}: {column!r} is too small to represent."
-                        )
-                    numeric_values[column].append(number)
+    missing = dict.fromkeys(columns, 0)
+    seen = set()
+    row_count = 0
+    duplicates = 0
 
-            # Count repeats after the first copy.
-            record = tuple(row)
-            if record in seen:
-                duplicates += 1
-            seen.add(record)
+    for row in rows:
+        if not row:
+            continue
+        if len(row) != len(columns):
+            raise ValueError(
+                f"Line {reader.line_num}: expected {len(columns)} values, "
+                f"got {len(row)}."
+            )
+
+        row_count += 1
+        for column, value in zip(columns, row):
+            if value.strip() == "":
+                missing[column] += 1
+            elif column in numeric_values:
+                try:
+                    number = float(value)
+                    if not math.isfinite(number):
+                        raise ValueError
+                    # The exponent changes the scale, but never makes a mantissa zero.
+                    mantissa = value.lower().partition("e")[0]
+                    underflow = number == 0 and not Decimal(mantissa).is_zero()
+                except (ValueError, InvalidOperation) as error:
+                    raise ValueError(
+                        f"Line {reader.line_num}: {column!r} needs a finite number."
+                    ) from error
+                if underflow:
+                    raise ValueError(
+                        f"Line {reader.line_num}: {column!r} is too small to represent."
+                    )
+                numeric_values[column].append(number)
+
+        # Count repeats after the first copy.
+        record = tuple(row)
+        if record in seen:
+            duplicates += 1
+        seen.add(record)
 
     report = {
         "rows": row_count,

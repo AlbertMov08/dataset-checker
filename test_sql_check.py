@@ -4,7 +4,9 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from checker import check_csv_stream
 from sql_check import compare_row_counts
 
 
@@ -78,6 +80,23 @@ class SqlCheckTests(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn("Line 2: expected 3 values", result.stderr)
             self.assertEqual(result.stdout, "")
+
+    def test_both_counts_use_the_same_file_after_path_replacement(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "people.csv"
+            path.write_text("name,age,city\nAna,20,Oakland\n", encoding="utf-8")
+            replacement = path.with_name("replacement.csv")
+            replacement.write_text("name,age,city\nSam,21,Paris\nLee,22,Rome\n",
+                                   encoding="utf-8")
+
+            def replace_after_check(stream):
+                report = check_csv_stream(stream)
+                replacement.replace(path)
+                return report
+
+            with patch("sql_check.check_csv_stream", side_effect=replace_after_check):
+                self.assertEqual(compare_row_counts(path), (1, 1))
+            self.assertEqual(compare_row_counts(path), (2, 2))
 
     def test_wrong_columns(self):
         with tempfile.TemporaryDirectory() as folder:
