@@ -3,8 +3,11 @@ import csv
 from decimal import Context, Decimal, InvalidOperation, localcontext
 import json
 import math
+import os
+from pathlib import Path
 from statistics import mean, quantiles
 import sys
+from tempfile import NamedTemporaryFile
 
 
 def percentage(part, total):
@@ -127,6 +130,19 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
     return report
 
 
+def save_report(report, path):
+    """Publish a complete report only if the destination is still free."""
+    if not path:
+        raise ValueError("Give --output a new filename.")
+    destination = Path(path)
+    with NamedTemporaryFile(mode="w", encoding="utf-8", dir=destination.parent) as file:
+        json.dump(report, file, indent=2)
+        file.write("\n")
+        file.flush()
+        # A hard link publishes the complete file and fails if the name exists.
+        os.link(file.name, path)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Check a CSV for basic data problems.")
     parser.add_argument("path", help="CSV file to check")
@@ -170,11 +186,8 @@ def main():
 
     if args.output is not None:
         try:
-            # Don't overwrite an existing file.
-            with open(args.output, "x", encoding="utf-8") as file:
-                json.dump(report, file, indent=2)
-                file.write("\n")
-        except OSError as error:
+            save_report(report, args.output)
+        except (OSError, ValueError) as error:
             print(f"Could not save the report: {error}", file=sys.stderr)
             return 1
         print(f"Report saved to {args.output}")

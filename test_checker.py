@@ -6,8 +6,9 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from checker import check_csv, percentage
+from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
@@ -270,6 +271,18 @@ class CheckerTests(unittest.TestCase):
                 else:
                     self.assertFalse(target.exists())
                 output.unlink()
+
+    def test_failed_report_write_leaves_no_partial_output(self):
+        output = self.path.with_suffix(".json")
+
+        def fail_after_write(report, file, **options):
+            file.write('{"rows":')
+            raise OSError("Simulated write failure")
+
+        with patch("checker.json.dump", side_effect=fail_after_write):
+            with self.assertRaisesRegex(OSError, "Simulated write failure"):
+                save_report({"rows": 4}, str(output))
+        self.assertEqual(list(output.parent.iterdir()), [])
 
     def test_export_missing_folder(self):
         self.check_text("name,age\nAna,19\n")
