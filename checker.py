@@ -101,9 +101,10 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
 
         # Count repeats after the first copy.
         record = tuple(row)
-        if record in seen:
-            duplicates += 1
+        previous_size = len(seen)
         seen.add(record)
+        if len(seen) == previous_size:
+            duplicates += 1
 
     report = {
         "rows": row_count,
