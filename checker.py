@@ -136,7 +136,7 @@ def save_report(report, path):
         raise ValueError("Give --output a new filename.")
     destination = Path(path)
     with NamedTemporaryFile(mode="w", encoding="utf-8", dir=destination.parent) as file:
-        json.dump(report, file, indent=2)
+        json.dump(report, file, indent=2, allow_nan=False)
         file.write("\n")
         file.flush()
         # A hard link publishes the complete file and fails if the name exists.

@@ -284,6 +284,14 @@ class CheckerTests(unittest.TestCase):
                 save_report({"rows": 4}, str(output))
         self.assertEqual(list(output.parent.iterdir()), [])
 
+    def test_export_rejects_nonfinite_values_without_creating_a_report(self):
+        output = self.path.with_suffix(".json")
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    save_report({"numeric": {"age": {"mean": value}}}, output)
+                self.assertEqual(list(output.parent.iterdir()), [])
+
     def test_export_missing_folder(self):
         self.check_text("name,age\nAna,19\n")
         result = self.run_export(self.path.parent / "missing" / "report.json")
