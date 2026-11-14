@@ -284,6 +284,31 @@ class CheckerTests(unittest.TestCase):
                 save_report({"rows": 4}, str(output))
         self.assertEqual(list(output.parent.iterdir()), [])
 
+    def test_failed_report_close_prevents_publication(self):
+        output = self.path.with_suffix(".json")
+
+        class FailingClose:
+            def __init__(self, temporary):
+                self.temporary = temporary
+                self.name = temporary.name
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                self.temporary.close()
+                raise OSError("Simulated close failure")
+
+            def write(self, text):
+                return self.temporary.write(text)
+
+        from tempfile import NamedTemporaryFile
+        with patch("checker.NamedTemporaryFile",
+                   side_effect=lambda **options: FailingClose(NamedTemporaryFile(**options))):
+            with self.assertRaisesRegex(OSError, "Simulated close failure"):
+                save_report({"rows": 4}, output)
+        self.assertEqual(list(output.parent.iterdir()), [])
+
     def test_export_rejects_nonfinite_values_without_creating_a_report(self):
         output = self.path.with_suffix(".json")
         for value in (float("nan"), float("inf"), float("-inf")):

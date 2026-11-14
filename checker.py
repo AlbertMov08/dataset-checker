@@ -135,12 +135,17 @@ def save_report(report, path):
     if not path:
         raise ValueError("Give --output a new filename.")
     destination = Path(path)
-    with NamedTemporaryFile(mode="w", encoding="utf-8", dir=destination.parent) as file:
-        json.dump(report, file, indent=2, allow_nan=False)
-        file.write("\n")
-        file.flush()
+    temporary = NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=destination.parent, delete=False
+    )
+    try:
+        with temporary:
+            json.dump(report, temporary, indent=2, allow_nan=False)
+            temporary.write("\n")
         # A hard link publishes the complete file and fails if the name exists.
-        os.link(file.name, path)
+        os.link(temporary.name, path)
+    finally:
+        os.unlink(temporary.name)
 
 
 def main():
