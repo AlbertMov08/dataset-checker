@@ -272,6 +272,20 @@ class CheckerTests(unittest.TestCase):
                     self.assertFalse(target.exists())
                 output.unlink()
 
+    def test_export_preserves_a_report_created_while_writing(self):
+        output = self.path.with_suffix(".json")
+        original_dump = json.dump
+
+        def write_then_create_destination(report, file, **options):
+            original_dump(report, file, **options)
+            output.write_text("concurrent report", encoding="utf-8")
+
+        with patch("checker.json.dump", side_effect=write_then_create_destination):
+            with self.assertRaises(FileExistsError):
+                save_report({"rows": 4}, output)
+        self.assertEqual(output.read_text(encoding="utf-8"), "concurrent report")
+        self.assertEqual(list(output.parent.iterdir()), [output])
+
     def test_failed_report_write_leaves_no_partial_output(self):
         output = self.path.with_suffix(".json")
 
