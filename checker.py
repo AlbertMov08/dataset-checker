@@ -56,8 +56,12 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
         raise ValueError("The file needs a header row.")
 
     columns = [name.strip() for name in columns]
-    if "" in columns:
-        raise ValueError("Each column needs a name.")
+    for index, column in enumerate(columns, start=1):
+        if not column:
+            raise ValueError(
+                f"Line {reader.line_num}: each column needs a name. "
+                f"Column {index} is blank."
+            )
     named_columns = set()
     for column in columns:
         if column in named_columns:

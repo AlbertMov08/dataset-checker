@@ -51,6 +51,10 @@ class CheckerTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.check_text(text)
 
+    def test_blank_header_name_identifies_the_line_and_column(self):
+        with self.assertRaisesRegex(ValueError, r"Line 2: .*Column 2 is blank"):
+            self.check_text("\nname, ,city\nAna,20,Oakland\n")
+
     def test_repeated_header_names_identify_the_trimmed_name(self):
         with self.assertRaisesRegex(ValueError, "'age' more than once"):
             self.check_text("name,age, age ,city\n")
