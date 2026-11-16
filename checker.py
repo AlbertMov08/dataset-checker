@@ -58,8 +58,11 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
     columns = [name.strip() for name in columns]
     if "" in columns:
         raise ValueError("Each column needs a name.")
-    if len(set(columns)) != len(columns):
-        raise ValueError("Column names must be different.")
+    named_columns = set()
+    for column in columns:
+        if column in named_columns:
+            raise ValueError(f"Column names must be different. Found {column!r} more than once.")
+        named_columns.add(column)
     outlier_columns = dict.fromkeys(outlier_columns)
     numeric_values = {column: [] for column in (*numeric_columns, *outlier_columns)}
     for column in numeric_values:

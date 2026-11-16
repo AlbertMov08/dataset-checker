@@ -19,6 +19,7 @@ A UTF-8 byte order mark at the start of the file is accepted. The checker skips
 blank lines between CSV records. A row made of separators still counts as a row
 with missing cells. Put cells containing a comma or line break inside double
 quotes.
+Repeated column names are reported after surrounding spaces are trimmed.
 
 To save the counts and column names as JSON:
 
