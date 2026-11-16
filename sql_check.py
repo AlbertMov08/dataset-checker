@@ -41,6 +41,9 @@ def main():
     args = parser.parse_args()
     try:
         python_count, sql_count = compare_row_counts(args.path)
+    except UnicodeDecodeError:
+        print("Could not compare row counts: the CSV must use UTF-8 encoding.", file=sys.stderr)
+        return 1
     except (OSError, ValueError, csv.Error, sqlite3.Error) as error:
         print(f"Could not compare row counts: {error}", file=sys.stderr)
         return 1

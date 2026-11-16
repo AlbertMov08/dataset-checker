@@ -81,6 +81,20 @@ class SqlCheckTests(unittest.TestCase):
             self.assertIn("Line 2: expected 3 values", result.stderr)
             self.assertEqual(result.stdout, "")
 
+    def test_both_commands_explain_unsupported_csv_encoding(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "people.csv"
+            path.write_bytes("name,age,city\nZoë,20,Paris\n".encode("latin-1"))
+            for script in ("checker.py", "sql_check.py"):
+                with self.subTest(script=script):
+                    result = subprocess.run(
+                        [sys.executable, str(Path(__file__).with_name(script)), str(path)],
+                        capture_output=True, text=True,
+                    )
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertIn("CSV must use UTF-8", result.stderr)
+                    self.assertEqual(result.stdout, "")
+
     def test_both_counts_use_the_same_file_after_path_replacement(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "people.csv"

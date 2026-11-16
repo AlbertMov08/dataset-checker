@@ -171,6 +171,9 @@ def main():
 
     try:
         report = check_csv(args.path, args.numeric_column, args.outlier_column)
+    except UnicodeDecodeError:
+        print("Could not check the file: the CSV must use UTF-8 encoding.", file=sys.stderr)
+        return 1
     except (OSError, ValueError, csv.Error) as error:
         print(f"Could not check the file: {error}", file=sys.stderr)
         return 1
