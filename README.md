@@ -73,6 +73,12 @@ To run the tests:
 
 python3 -m unittest -v
 
+Start with a small sample when exploring a large file. The checker reads records
+one at a time, but exact duplicate detection keeps each distinct row in memory.
+Requested numeric summaries also keep their values for analysis. The SQLite
+example stores a second copy of the rows in an in-memory database and is meant
+for practice with small files.
+
 First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. The example outputs above cover the rule-based checks. The final walkthrough will also cover the planned ML comparison.
 
 Malformed CSV errors include the physical line number, including quoted cells that span lines.
