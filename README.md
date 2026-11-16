@@ -15,6 +15,11 @@ value, so both show 25.0%. The duplicate still counts toward the four rows.
 
 Replace sample.csv with your own file to check it. The file should use UTF-8, have comma-separated values, and start with a header row. Each column needs a different name. For now, NA and null are treated as text.
 
+A UTF-8 byte order mark at the start of the file is accepted. The checker skips
+blank lines between CSV records. A row made of separators still counts as a row
+with missing cells. Put cells containing a comma or line break inside double
+quotes.
+
 To save the counts and column names as JSON:
 
 python3 checker.py sample.csv --output report.json
