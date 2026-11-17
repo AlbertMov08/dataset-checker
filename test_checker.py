@@ -56,8 +56,8 @@ class CheckerTests(unittest.TestCase):
             self.check_text("\nname, ,city\nAna,20,Oakland\n")
 
     def test_repeated_header_names_identify_the_trimmed_name(self):
-        with self.assertRaisesRegex(ValueError, "'age' more than once"):
-            self.check_text("name,age, age ,city\n")
+        with self.assertRaisesRegex(ValueError, r"Line 2: .*'age' more than once, in columns 2 and 3"):
+            self.check_text("\nname,age, age ,city\n")
 
     def test_wrong_row_length(self):
         for text in ["name,age\nAna\n", "name,age\nAna,19,Berkeley\n"]:

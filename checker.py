@@ -56,21 +56,23 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
         raise ValueError("The file needs a header row.")
 
     columns = [name.strip() for name in columns]
+    positions = {}
     for index, column in enumerate(columns, start=1):
         if not column:
             raise ValueError(
                 f"Line {reader.line_num}: each column needs a name. "
                 f"Column {index} is blank."
             )
-    named_columns = set()
-    for column in columns:
-        if column in named_columns:
-            raise ValueError(f"Column names must be different. Found {column!r} more than once.")
-        named_columns.add(column)
+        if column in positions:
+            raise ValueError(
+                f"Line {reader.line_num}: found {column!r} more than once, "
+                f"in columns {positions[column]} and {index}."
+            )
+        positions[column] = index
     outlier_columns = dict.fromkeys(outlier_columns)
     numeric_values = {column: [] for column in (*numeric_columns, *outlier_columns)}
     for column in numeric_values:
-        if column not in columns:
+        if column not in positions:
             raise ValueError(f"Numeric column {column!r} is not in the header.")
 
     missing = dict.fromkeys(columns, 0)
