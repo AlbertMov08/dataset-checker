@@ -13,11 +13,16 @@ python3 checker.py sample.csv
 The sample has four rows and one duplicate. Age and city each have one missing
 value, so both show 25.0%. The duplicate still counts toward the four rows.
 
-Replace sample.csv with your own file to check it. The file should use UTF-8, have comma-separated values, and start with a header row. Each column needs a different name. For now, NA and null are treated as text.
+Replace sample.csv with your own file to check it. The file should use UTF-8 and start with a header row. Each column needs a different name. For now, NA and null are treated as text.
+
+The checker assumes comma-separated values. For spreadsheet exports with tabs
+or semicolons, pass --delimiter tab or --delimiter semicolon.
+
+python3 checker.py export.tsv --delimiter tab
 
 A UTF-8 byte order mark at the start of the file is accepted. The checker skips
 blank lines between CSV records. A row made of separators still counts as a row
-with missing cells. Put cells containing a comma or line break inside double
+with missing cells. Put cells containing the field separator or a line break inside double
 quotes.
 Repeated column names are reported after surrounding spaces are trimmed.
 
@@ -53,7 +58,7 @@ purchase, the flag is not a data error. The repeated 2 is counted in the
 quartiles but flagged only as a duplicate row. Review what the values mean
 before removing anything. Values exactly on a fence are not flagged.
 
-There's also a small SQL example for sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs. Malformed rows, unfinished quotes, and invalid UTF-8 stop the comparison without changing the CSV.
+There's also a small SQL example for comma-separated files like sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs. Malformed rows, unfinished quotes, and invalid UTF-8 stop the comparison without changing the CSV.
 
 The example validates the CSV, rewinds the same open file, and uses executemany to pass rows to one parameterized INSERT statement.
 

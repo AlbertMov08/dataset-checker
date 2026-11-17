@@ -10,6 +10,9 @@ import sys
 from tempfile import NamedTemporaryFile
 
 
+DELIMITERS = {"comma": ",", "semicolon": ";", "tab": "\t"}
+
+
 def percentage(part, total):
     if total == 0:
         return 0.0
@@ -37,15 +40,15 @@ def csv_rows(reader):
         raise csv.Error(f"Line {reader.line_num}: {error}") from error
 
 
-def check_csv(path, numeric_columns=(), outlier_columns=()):
+def check_csv(path, numeric_columns=(), outlier_columns=(), *, delimiter=","):
     """Count missing cells and repeated rows in a CSV."""
     with open(path, newline="", encoding="utf-8-sig") as file:
-        return check_csv_stream(file, numeric_columns, outlier_columns)
+        return check_csv_stream(file, numeric_columns, outlier_columns, delimiter=delimiter)
 
 
-def check_csv_stream(file, numeric_columns=(), outlier_columns=()):
+def check_csv_stream(file, numeric_columns=(), outlier_columns=(), *, delimiter=","):
     """Check a CSV from an open text stream positioned at the header."""
-    reader = csv.reader(file, strict=True)
+    reader = csv.reader(file, delimiter=delimiter, strict=True)
     rows = csv_rows(reader)
     columns = []
     for row in rows:
@@ -160,6 +163,10 @@ def save_report(report, path):
 def main():
     parser = argparse.ArgumentParser(description="Check a CSV for basic data problems.")
     parser.add_argument("path", help="CSV file to check")
+    parser.add_argument(
+        "--delimiter", choices=DELIMITERS, default="comma",
+        help="Field separator (default: comma)",
+    )
     parser.add_argument("--output", help="Save the report to a new JSON file")
     parser.add_argument(
         "--numeric-column", action="append", default=[], metavar="NAME",
@@ -172,7 +179,10 @@ def main():
     args = parser.parse_args()
 
     try:
-        report = check_csv(args.path, args.numeric_column, args.outlier_column)
+        report = check_csv(
+            args.path, args.numeric_column, args.outlier_column,
+            delimiter=DELIMITERS[args.delimiter],
+        )
     except UnicodeDecodeError:
         print("Could not check the file: the CSV must use UTF-8 encoding.", file=sys.stderr)
         return 1

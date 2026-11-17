@@ -70,6 +70,24 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["rows"], 2)
         self.assertEqual(report["missing"], {"name": 0, "note": 0})
 
+    def test_cli_accepts_tab_and_semicolon_delimiters_with_quoted_fields(self):
+        for kind, separator in (("tab", "\t"), ("semicolon", ";")):
+            with self.subTest(kind=kind):
+                self.path.write_text(
+                    f'name{separator}note{separator}age\n'
+                    f'Ana{separator}"one{separator}two"{separator}19\n'
+                    f'Sam{separator}{separator}21\n',
+                    encoding="utf-8",
+                )
+                result = subprocess.run(
+                    [sys.executable, "checker.py", str(self.path),
+                     "--delimiter", kind, "--numeric-column", "age"],
+                    capture_output=True, text=True, check=True,
+                )
+                self.assertIn("Columns: 3", result.stdout)
+                self.assertIn("  note: 1 (50.0%)", result.stdout)
+                self.assertIn("mean=20 (2 values)", result.stdout)
+
     def test_multiline_cells_keep_physical_line_numbers_in_errors(self):
         self.check_text('name,age\n"two\nlines",20\nSam,nope\n')
         with self.assertRaisesRegex(ValueError, "Line 4: 'age' needs a finite number"):
