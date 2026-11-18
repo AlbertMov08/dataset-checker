@@ -96,6 +96,11 @@ class CheckerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Line 4: expected 2 values, got 1"):
             check_csv(self.path)
 
+    def test_multiline_row_validation_names_the_full_record_range(self):
+        self.path.write_text('name,age\n"two\nlines",nope\n', encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Lines 2–3: 'age' needs a finite number"):
+            check_csv(self.path, ["age"])
+
     def test_header_spaces_and_bom(self):
         report = self.check_text("\ufeff name , age \nAna,19\n")
         self.assertEqual(report["columns"], ["name", "age"])
@@ -105,16 +110,16 @@ class CheckerTests(unittest.TestCase):
             self.check_text('name,note\nAna,"unfinished')
 
     def test_csv_parser_errors_include_the_physical_line(self):
-        for text, line in (('"unfinished', 1),
-                           ('name,note\nAna,"two\nunfinished', 3),
-                           ('name\n' + 'x' * (csv.field_size_limit() + 1), 2)):
-            with self.subTest(line=line):
-                with self.assertRaisesRegex(csv.Error, f"Line {line}:"):
+        for text, location in (('"unfinished', "Line 1"),
+                           ('name,note\nAna,"two\nunfinished', "Lines 2–3"),
+                           ('name\n' + 'x' * (csv.field_size_limit() + 1), "Line 2")):
+            with self.subTest(location=location):
+                with self.assertRaisesRegex(csv.Error, f"{location}:"):
                     self.check_text(text)
                 original = self.path.read_bytes()
                 result = self.run_export(self.path.with_suffix(".json"))
                 self.assertEqual(result.returncode, 1)
-                self.assertIn(f"Line {line}:", result.stderr)
+                self.assertIn(f"{location}:", result.stderr)
                 self.assertNotIn("Traceback", result.stderr)
                 self.assertEqual(self.path.read_bytes(), original)
                 self.assertFalse(self.path.with_suffix(".json").exists())

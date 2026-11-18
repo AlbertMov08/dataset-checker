@@ -34,10 +34,19 @@ def outlier_count(values):
 
 
 def csv_rows(reader):
-    try:
-        yield from reader
-    except csv.Error as error:
-        raise csv.Error(f"Line {reader.line_num}: {error}") from error
+    while True:
+        start = reader.line_num + 1
+        try:
+            row = next(reader)
+        except StopIteration:
+            return
+        except csv.Error as error:
+            raise csv.Error(f"{line_label(start, reader.line_num)}: {error}") from error
+        yield row, line_label(start, reader.line_num)
+
+
+def line_label(start, end):
+    return f"Line {start}" if start == end else f"Lines {start}–{end}"
 
 
 def check_csv(path, numeric_columns=(), outlier_columns=(), *, delimiter=","):
@@ -51,7 +60,7 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=(), *, delimiter=
     reader = csv.reader(file, delimiter=delimiter, strict=True)
     rows = csv_rows(reader)
     columns = []
-    for row in rows:
+    for row, location in rows:
         if row:
             columns = row
             break
@@ -63,12 +72,12 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=(), *, delimiter=
     for index, column in enumerate(columns, start=1):
         if not column:
             raise ValueError(
-                f"Line {reader.line_num}: each column needs a name. "
+                f"{location}: each column needs a name. "
                 f"Column {index} is blank."
             )
         if column in positions:
             raise ValueError(
-                f"Line {reader.line_num}: found {column!r} more than once, "
+                f"{location}: found {column!r} more than once, "
                 f"in columns {positions[column]} and {index}."
             )
         positions[column] = index
@@ -83,12 +92,12 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=(), *, delimiter=
     row_count = 0
     duplicates = 0
 
-    for row in rows:
+    for row, location in rows:
         if not row:
             continue
         if len(row) != len(columns):
             raise ValueError(
-                f"Line {reader.line_num}: expected {len(columns)} values, "
+                f"{location}: expected {len(columns)} values, "
                 f"got {len(row)}."
             )
 
@@ -106,11 +115,11 @@ def check_csv_stream(file, numeric_columns=(), outlier_columns=(), *, delimiter=
                     underflow = number == 0 and not Decimal(mantissa).is_zero()
                 except (ValueError, InvalidOperation) as error:
                     raise ValueError(
-                        f"Line {reader.line_num}: {column!r} needs a finite number."
+                        f"{location}: {column!r} needs a finite number."
                     ) from error
                 if underflow:
                     raise ValueError(
-                        f"Line {reader.line_num}: {column!r} is too small to represent."
+                        f"{location}: {column!r} is too small to represent."
                     )
                 numeric_values[column].append(number)
 
