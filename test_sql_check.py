@@ -125,6 +125,22 @@ class SqlCheckTests(unittest.TestCase):
                 self.assertEqual(compare_row_counts(path), (1, 1))
             self.assertEqual(compare_row_counts(path), (2, 2))
 
+    def test_comparison_rejects_an_edit_to_the_open_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "people.csv"
+            path.write_text("name,age,city\nAna,20,Oakland\n", encoding="utf-8")
+
+            def append_after_check(stream, **kwargs):
+                report = check_csv_stream(stream, **kwargs)
+                with path.open("a", encoding="utf-8") as writer:
+                    writer.write("Sam,21,Paris\n")
+                return report
+
+            with patch("sql_check.check_csv_stream", side_effect=append_after_check):
+                with self.assertRaisesRegex(ValueError, "changed during the comparison"):
+                    compare_row_counts(path)
+            self.assertEqual(compare_row_counts(path), (2, 2))
+
     def test_wrong_columns(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "other.csv"
