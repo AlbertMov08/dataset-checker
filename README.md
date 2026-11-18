@@ -58,7 +58,7 @@ purchase, the flag is not a data error. The repeated 2 is counted in the
 quartiles but flagged only as a duplicate row. Review what the values mean
 before removing anything. Values exactly on a fence are not flagged.
 
-There's also a small SQL example for comma-separated files like sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs. Malformed rows, unfinished quotes, and invalid UTF-8 stop the comparison without changing the CSV.
+There's also a small SQL example for files like sample.csv. It loads the name, age, and city columns into SQLite, counts the rows with SELECT COUNT(*), and compares that with the Python count. The database only exists while the example runs. Malformed rows, unfinished quotes, and invalid UTF-8 stop the comparison without changing the CSV.
 
 The example validates the CSV, rewinds the same open file, and uses executemany to pass rows to one parameterized INSERT statement.
 
@@ -70,6 +70,9 @@ Counts match: True.
 Pass a path to check another file with the same three columns.
 
 python3 sql_check.py people.csv
+
+Use --delimiter tab or --delimiter semicolon for another separator. Both the
+Python check and the SQLite load use the same separator.
 
 Both counts include duplicate rows and rows with empty cells. Matching counts
 only show that the two readers counted the same number of rows.

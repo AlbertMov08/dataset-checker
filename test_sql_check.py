@@ -81,6 +81,19 @@ class SqlCheckTests(unittest.TestCase):
             self.assertIn("Line 2: expected 3 values", result.stderr)
             self.assertEqual(result.stdout, "")
 
+    def test_cli_uses_the_separator_for_validation_and_sqlite(self):
+        script = Path(__file__).with_name("sql_check.py")
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "people.tsv"
+            path.write_text('name\tage\tcity\nAna\t20\t"Oakland\tCA"\n', encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(script), str(path), "--delimiter", "tab"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Python row count: 1", result.stdout)
+            self.assertIn("SQLite row count: 1", result.stdout)
+
     def test_both_commands_explain_unsupported_csv_encoding(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "people.csv"
@@ -103,8 +116,8 @@ class SqlCheckTests(unittest.TestCase):
             replacement.write_text("name,age,city\nSam,21,Paris\nLee,22,Rome\n",
                                    encoding="utf-8")
 
-            def replace_after_check(stream):
-                report = check_csv_stream(stream)
+            def replace_after_check(stream, **kwargs):
+                report = check_csv_stream(stream, **kwargs)
                 replacement.replace(path)
                 return report
 
