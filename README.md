@@ -30,6 +30,8 @@ To save the counts and column names as JSON:
 
 python3 checker.py sample.csv --output report.json
 
+Terminal column names appear with control characters escaped so a header cannot change the terminal display. JSON keeps the original column names.
+
 The results still print in the terminal. Give --output a new filename each time. Existing files are preserved. The report appears at the requested path after the temporary file closes successfully. Use a folder on a filesystem that supports hard links. The JSON writer rejects NaN and infinity.
 
 To get the minimum, maximum, and average for a numerical column:

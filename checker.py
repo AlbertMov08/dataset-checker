@@ -13,6 +13,10 @@ from tempfile import NamedTemporaryFile
 DELIMITERS = {"comma": ",", "semicolon": ";", "tab": "\t"}
 
 
+def terminal_name(value):
+    return "".join(char if char.isprintable() else ascii(char)[1:-1] for char in value)
+
+
 def percentage(part, total):
     if total == 0:
         return 0.0
@@ -205,20 +209,20 @@ def main():
     print("Missing values:")
     for column, count in report["missing"].items():
         missing_percent = percentage(count, report["rows"])
-        print(f"  {column}: {count} ({missing_percent:.1f}%)")
+        print(f"  {terminal_name(column)}: {count} ({missing_percent:.1f}%)")
 
     for column, summary in report.get("numeric", {}).items():
         if summary["count"]:
-            print(f"Numeric {column}: min={summary['min']:g}, "
+            print(f"Numeric {terminal_name(column)}: min={summary['min']:g}, "
                   f"max={summary['max']:g}, mean={summary['mean']:g} "
                   f"({summary['count']} values)")
         else:
-            print(f"Numeric {column}: no numeric values")
+            print(f"Numeric {terminal_name(column)}: no numeric values")
 
         if "potential_outliers" in summary:
             count = summary["potential_outliers"]
             detail = "needs at least 4 values" if count is None else str(count)
-            print(f"Potential outliers {column}: {detail} (1.5 IQR rule)")
+            print(f"Potential outliers {terminal_name(column)}: {detail} (1.5 IQR rule)")
 
     if args.output is not None:
         try:

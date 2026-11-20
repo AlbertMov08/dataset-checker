@@ -21,6 +21,16 @@ class CheckerTests(unittest.TestCase):
         self.path.write_text(text, encoding="utf-8")
         return check_csv(self.path)
 
+    def test_cli_escapes_control_characters_in_column_names(self):
+        column = "amount\x1b[2J"
+        self.path.write_text(f"{column}\n1\n2\n3\n100\n", encoding="utf-8")
+        result = subprocess.run(
+            [sys.executable, "checker.py", str(self.path), "--outlier-column", column],
+            capture_output=True, text=True, check=True,
+        )
+        self.assertNotIn("\x1b", result.stdout)
+        self.assertIn("amount\\x1b[2J", result.stdout)
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
