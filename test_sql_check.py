@@ -141,6 +141,21 @@ class SqlCheckTests(unittest.TestCase):
                     compare_row_counts(path)
             self.assertEqual(compare_row_counts(path), (2, 2))
 
+    def test_cli_escapes_control_characters_in_saved_report_paths(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "report\x1b[2J\n.json"
+            sample = Path(__file__).with_name("sample.csv")
+            result = subprocess.run(
+                [sys.executable, str(Path(__file__).with_name("checker.py")),
+                 str(sample), "--output", str(path)],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(path.is_file())
+            self.assertNotIn("\x1b", result.stdout)
+            self.assertIn("\\x1b", result.stdout)
+            self.assertIn("\\n.json", result.stdout)
+
     def test_wrong_columns(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "other.csv"

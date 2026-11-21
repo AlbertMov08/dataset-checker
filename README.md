@@ -91,6 +91,8 @@ for practice with small files.
 
 First-version progress: 6 of 8 milestones are done (75% by milestone count). CSV checks, missing-value percentages, JSON export, the SQLite example, numerical summaries, and an opt-in outlier check are done. The example outputs above cover the rule-based checks. The final walkthrough will also cover the planned ML comparison.
 
+Saved report paths escape control characters in the terminal; the filename on disk stays unchanged.
+
 Malformed CSV errors identify the physical line or range of lines for the record.
 
 Zero values in scientific notation remain valid even when the exponent is very large.

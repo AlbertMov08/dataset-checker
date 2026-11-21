@@ -230,7 +230,7 @@ def main():
         except (OSError, ValueError) as error:
             print(f"Could not save the report: {error}", file=sys.stderr)
             return 1
-        print(f"Report saved to {args.output}")
+        print(f"Report saved to {terminal_name(args.output)}")
     return 0
 
 
