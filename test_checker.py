@@ -279,6 +279,15 @@ class CheckerTests(unittest.TestCase):
             capture_output=True, text=True,
         )
 
+    def test_report_publication_failure_cleans_temporary_file(self):
+        output = self.path.with_suffix(".json")
+        for failure in (OSError("disk full"), KeyboardInterrupt()):
+            with self.subTest(failure=type(failure).__name__):
+                with patch("checker.os.link", side_effect=failure):
+                    with self.assertRaises(type(failure)):
+                        save_report({"rows": 0}, output)
+                self.assertEqual(list(Path(self.folder.name).iterdir()), [])
+
     def test_json_export(self):
         self.check_text("name,age\nAna,19\nSam,\nAna,19\n")
         output = self.path.with_suffix(".json")
