@@ -31,6 +31,12 @@ class CheckerTests(unittest.TestCase):
         self.assertNotIn("\x1b", result.stdout)
         self.assertIn("amount\\x1b[2J", result.stdout)
 
+    def test_duplicate_detection_preserves_cell_whitespace_and_spelling(self):
+        report = self.check_text("value,other\n1,x\n1 ,x\n01,x\n1,x\n ,\n,\n")
+        self.assertEqual(report["rows"], 6)
+        self.assertEqual(report["duplicates"], 1)
+        self.assertEqual(report["missing"], {"value": 2, "other": 2})
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
