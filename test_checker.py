@@ -288,6 +288,14 @@ class CheckerTests(unittest.TestCase):
                         save_report({"rows": 0}, output)
                 self.assertEqual(list(Path(self.folder.name).iterdir()), [])
 
+    def test_json_export_preserves_unicode_and_control_character_headers(self):
+        report = self.check_text('"東京\nvalue",café\n,hello\n')
+        output = self.path.with_suffix(".json")
+        save_report(report, output)
+        self.assertEqual(json.loads(output.read_text(encoding="utf-8")), report)
+        self.assertEqual(report["missing"]["東京\nvalue"], 1)
+        self.assertEqual(output.read_bytes()[-1:], b"\n")
+
     def test_json_export(self):
         self.check_text("name,age\nAna,19\nSam,\nAna,19\n")
         output = self.path.with_suffix(".json")
