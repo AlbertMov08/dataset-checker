@@ -11,6 +11,14 @@ from sql_check import compare_row_counts
 
 
 class SqlCheckTests(unittest.TestCase):
+    def test_sql_comparison_keeps_nul_cells_as_bound_text(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "people.csv"
+            original = b"name,age,city\nAna\x00Lee,20,Paris\nAna\x00Lee,20,Paris\n"
+            path.write_bytes(original)
+            self.assertEqual(compare_row_counts(path), (2, 2))
+            self.assertEqual(path.read_bytes(), original)
+
     def test_sample(self):
         sample = Path(__file__).with_name("sample.csv")
         self.assertEqual(compare_row_counts(sample), (4, 4))
