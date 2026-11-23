@@ -37,6 +37,13 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["duplicates"], 1)
         self.assertEqual(report["missing"], {"value": 2, "other": 2})
 
+    def test_repeated_numeric_flags_produce_one_summary_and_outlier_count(self):
+        self.path.write_text("amount\n1\n2\n3\n100\n", encoding="utf-8")
+        report = check_csv(self.path, ["amount", "amount"], ["amount", "amount"])
+        self.assertEqual(list(report["numeric"]), ["amount"])
+        self.assertEqual(report["numeric"]["amount"]["count"], 4)
+        self.assertEqual(report["numeric"]["amount"]["potential_outliers"], 1)
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
