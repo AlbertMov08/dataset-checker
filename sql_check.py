@@ -5,7 +5,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from checker import DELIMITERS, check_csv_stream
+from checker import DELIMITERS, check_csv_stream, terminal_name
 
 
 def file_version(file):
@@ -58,7 +58,7 @@ def main():
         print("Could not compare row counts: the CSV must use UTF-8 encoding.", file=sys.stderr)
         return 1
     except (OSError, ValueError, csv.Error, sqlite3.Error) as error:
-        print(f"Could not compare row counts: {error}", file=sys.stderr)
+        print(f"Could not compare row counts: {terminal_name(str(error))}", file=sys.stderr)
         return 1
     print(f"Python row count: {python_count}")
     print(f"SQLite row count: {sql_count}")

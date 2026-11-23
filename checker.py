@@ -200,7 +200,7 @@ def main():
         print("Could not check the file: the CSV must use UTF-8 encoding.", file=sys.stderr)
         return 1
     except (OSError, ValueError, csv.Error) as error:
-        print(f"Could not check the file: {error}", file=sys.stderr)
+        print(f"Could not check the file: {terminal_name(str(error))}", file=sys.stderr)
         return 1
 
     print(f"Rows: {report['rows']}")
@@ -228,7 +228,7 @@ def main():
         try:
             save_report(report, args.output)
         except (OSError, ValueError) as error:
-            print(f"Could not save the report: {error}", file=sys.stderr)
+            print(f"Could not save the report: {terminal_name(str(error))}", file=sys.stderr)
             return 1
         print(f"Report saved to {terminal_name(args.output)}")
     return 0

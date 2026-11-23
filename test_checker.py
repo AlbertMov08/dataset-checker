@@ -60,6 +60,29 @@ class CheckerTests(unittest.TestCase):
                 self.assertFalse(output.exists())
                 self.assertEqual(list(Path(self.folder.name).iterdir()), [])
 
+    def test_cli_errors_escape_control_characters_in_missing_filenames(self):
+        path = Path(self.folder.name) / "missing\x1b[2J.csv"
+        for script in ("checker.py", "sql_check.py"):
+            with self.subTest(script=script):
+                result = subprocess.run([sys.executable, script, str(path)], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 1)
+                self.assertNotIn("\x1b", result.stderr)
+                self.assertIn("missing", result.stderr)
+
+        import io
+        from contextlib import redirect_stderr
+        import checker
+        import sql_check
+        for module, operation in ((checker, "check_csv"), (sql_check, "compare_row_counts")):
+            error_output = io.StringIO()
+            with self.subTest(module=module.__name__), \
+                    patch.object(module, operation, side_effect=OSError("bad\x1b[2J input")), \
+                    patch.object(sys, "argv", [module.__name__, "missing.csv"]), \
+                    redirect_stderr(error_output):
+                self.assertEqual(module.main(), 1)
+            self.assertNotIn("\x1b", error_output.getvalue())
+            self.assertIn("bad\\x1b[2J input", error_output.getvalue())
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
