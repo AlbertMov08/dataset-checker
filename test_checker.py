@@ -44,6 +44,13 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["numeric"]["amount"]["count"], 4)
         self.assertEqual(report["numeric"]["amount"]["potential_outliers"], 1)
 
+    def test_mean_of_opposite_extreme_values_stays_finite(self):
+        self.path.write_text("amount\n1e308\n1e308\n-1e308\n-1e308\n", encoding="utf-8")
+        report = check_csv(self.path, ["amount"])
+        self.assertEqual(report["numeric"]["amount"]["mean"], 0)
+        self.assertEqual(report["numeric"]["amount"]["count"], 4)
+        json.dumps(report, allow_nan=False)
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
