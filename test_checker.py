@@ -51,6 +51,15 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["numeric"]["amount"]["count"], 4)
         json.dumps(report, allow_nan=False)
 
+    def test_nonserializable_report_leaves_no_destination_or_temporary(self):
+        output = Path(self.folder.name) / "report.json"
+        for report in ({"value": object()}, {"value": float("nan")}):
+            with self.subTest(report=report):
+                with self.assertRaises((TypeError, ValueError)):
+                    save_report(report, output)
+                self.assertFalse(output.exists())
+                self.assertEqual(list(Path(self.folder.name).iterdir()), [])
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
