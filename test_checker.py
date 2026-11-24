@@ -113,6 +113,17 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), original)
         self.assertEqual(set(self.path.parent.iterdir()), {self.path, alias})
 
+    def test_numeric_summary_exports_smallest_subnormal_without_rounding_to_zero(self):
+        self.path.write_text("value\n5e-324\n5e-324\n5e-324\n5e-324\n")
+        report = check_csv(self.path, outlier_columns=["value"])
+        output = self.path.with_name("subnormal.json")
+        save_report(report, output)
+        summary = json.loads(output.read_text())["numeric"]["value"]
+        for key in ("min", "max", "mean"):
+            self.assertEqual(summary[key], 5e-324)
+            self.assertGreater(summary[key], 0)
+        self.assertEqual(summary["potential_outliers"], 0)
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
