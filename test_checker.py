@@ -83,6 +83,16 @@ class CheckerTests(unittest.TestCase):
             self.assertNotIn("\x1b", error_output.getvalue())
             self.assertIn("bad\\x1b[2J input", error_output.getvalue())
 
+    def test_outlier_counts_are_invariant_to_units_and_row_order(self):
+        values = [0, 1, 2, 3, 4, 5, 100]
+        for scale, offset in ((1, 0), (1000, 250), (-2, 15)):
+            for ordered in (values, list(reversed(values))):
+                with self.subTest(scale=scale, offset=offset, ordered=ordered):
+                    self.path.write_text("value\n" + "".join(f"{v * scale + offset}\n" for v in ordered))
+                    report = check_csv(self.path, outlier_columns=["value"])
+                    self.assertEqual(report["numeric"]["value"]["potential_outliers"], 1)
+                    self.assertEqual(report["rows"], 7)
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
