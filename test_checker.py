@@ -101,6 +101,18 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(report["duplicates"], 1)
         self.assertEqual(self.path.read_bytes(), original)
 
+    def test_export_refuses_hard_link_aliases_of_the_source(self):
+        self.path.write_text("value\n1\n2\n")
+        original = self.path.read_bytes()
+        alias = self.path.with_name("alias.json")
+        import os
+        os.link(self.path, alias)
+        with self.assertRaises(FileExistsError):
+            save_report(check_csv(self.path), alias)
+        self.assertEqual(alias.read_bytes(), original)
+        self.assertEqual(self.path.read_bytes(), original)
+        self.assertEqual(set(self.path.parent.iterdir()), {self.path, alias})
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
