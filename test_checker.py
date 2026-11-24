@@ -93,6 +93,14 @@ class CheckerTests(unittest.TestCase):
                     self.assertEqual(report["numeric"]["value"]["potential_outliers"], 1)
                     self.assertEqual(report["rows"], 7)
 
+    def test_duplicate_records_keep_embedded_line_endings_distinct(self):
+        self.path.write_bytes(b'value,other\r\n"a\r\nb",x\r\n"a\nb",x\r\n"a\r\nb",x\r\n')
+        original = self.path.read_bytes()
+        report = check_csv(self.path)
+        self.assertEqual(report["rows"], 3)
+        self.assertEqual(report["duplicates"], 1)
+        self.assertEqual(self.path.read_bytes(), original)
+
     def test_counts(self):
         report = self.check_text("name,age\nAna,19\nSam,\nAna,19\nAna,19\n")
         self.assertEqual(report["rows"], 4)
