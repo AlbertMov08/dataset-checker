@@ -11,6 +11,19 @@ from sql_check import compare_row_counts
 
 
 class SqlCheckTests(unittest.TestCase):
+    def test_database_failure_closes_connection_and_preserves_csv(self):
+        import sqlite3
+
+        sample = Path(__file__).with_name("sample.csv")
+        original = sample.read_bytes()
+        with patch("sql_check.sqlite3.connect") as connect:
+            connection = connect.return_value
+            connection.executemany.side_effect = sqlite3.OperationalError("database full")
+            with self.assertRaisesRegex(sqlite3.OperationalError, "database full"):
+                compare_row_counts(sample)
+            connection.close.assert_called_once_with()
+        self.assertEqual(sample.read_bytes(), original)
+
     def test_wrong_schema_is_rejected_before_creating_a_database(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "wrong.csv"
