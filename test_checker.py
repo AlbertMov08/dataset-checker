@@ -12,6 +12,21 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_numeric_and_duplicate_reports_are_equivalent_across_csv_dialects(self):
+        rows = [["name", "amount"], ["A;B, C\tD", "2.5"], ["two\nlines", "7.5"],
+                ["A;B, C\tD", "2.5"], ["empty", " "]]
+        expected = None
+        for separator in (",", ";", "\t"):
+            with self.subTest(separator=separator):
+                with self.path.open("w", newline="", encoding="utf-8") as stream:
+                    csv.writer(stream, delimiter=separator).writerows(rows)
+                result = check_csv(self.path, ["amount"], delimiter=separator)
+                if expected is None:
+                    expected = result
+                    self.assertEqual(result["duplicates"], 1)
+                    self.assertEqual(result["numeric"]["amount"]["count"], 3)
+                self.assertEqual(result, expected)
+
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
