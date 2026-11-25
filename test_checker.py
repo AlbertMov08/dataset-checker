@@ -12,6 +12,22 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_column_reordering_keeps_statistics_attached_to_names(self):
+        rows = [["name", "amount", "units"], ["A", "2", "10"], ["B", "", "20"],
+                ["A", "2", "10"], ["C", "100", ""]]
+        baseline = None
+        for order in ((0, 1, 2), (2, 0, 1), (1, 2, 0)):
+            with self.path.open("w", newline="", encoding="utf-8") as stream:
+                csv.writer(stream).writerows([[row[index] for index in order] for row in rows])
+            report = check_csv(self.path, ["units"], ["amount"])
+            self.assertEqual(report.pop("columns"), [rows[0][index] for index in order])
+            if baseline is None:
+                baseline = report
+            self.assertEqual(report, baseline)
+        self.assertEqual(baseline["duplicates"], 1)
+        self.assertEqual(baseline["numeric"]["units"]["mean"], 40 / 3)
+
+
     def test_stream_checker_accepts_a_single_pass_nonseekable_source(self):
         from checker import check_csv_stream
 
