@@ -11,6 +11,16 @@ from sql_check import compare_row_counts
 
 
 class SqlCheckTests(unittest.TestCase):
+    def test_wrong_schema_is_rejected_before_creating_a_database(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "wrong.csv"
+            for header in ("age,name,city", "name,age,country", "name,age,city,extra"):
+                path.write_text(header + "\n", encoding="utf-8")
+                with patch("sql_check.sqlite3.connect") as connect:
+                    with self.assertRaisesRegex(ValueError, "name, age, city"):
+                        compare_row_counts(path)
+                    connect.assert_not_called()
+
     def test_sql_comparison_keeps_nul_cells_as_bound_text(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "people.csv"
