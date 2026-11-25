@@ -12,6 +12,22 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_interrupted_export_removes_partial_json_and_preserves_source(self):
+        self.path.write_text("name\nAna\n", encoding="utf-8")
+        original = self.path.read_bytes()
+        output = self.path.with_suffix(".json")
+
+        def interrupt(report, stream, **options):
+            stream.write('{"rows":')
+            raise KeyboardInterrupt
+
+        with patch("checker.json.dump", side_effect=interrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                save_report(check_csv(self.path), output)
+        self.assertEqual(self.path.read_bytes(), original)
+        self.assertEqual(list(self.path.parent.iterdir()), [self.path])
+
+
     def test_column_reordering_keeps_statistics_attached_to_names(self):
         rows = [["name", "amount", "units"], ["A", "2", "10"], ["B", "", "20"],
                 ["A", "2", "10"], ["C", "100", ""]]
