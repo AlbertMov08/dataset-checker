@@ -12,6 +12,25 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_stream_checker_accepts_a_single_pass_nonseekable_source(self):
+        from checker import check_csv_stream
+
+        class SinglePass:
+            def __init__(self):
+                self.lines = iter(["name,amount\n", '"two\n', 'lines",3\n', "other,\n"])
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                return next(self.lines)
+
+        report = check_csv_stream(SinglePass(), ["amount"])
+        self.assertEqual(report["rows"], 2)
+        self.assertEqual(report["missing"], {"name": 0, "amount": 1})
+        self.assertEqual(report["numeric"]["amount"], {"count": 1, "min": 3, "max": 3, "mean": 3})
+
+
     def test_signed_and_exponent_zero_are_valid_without_becoming_missing(self):
         self.path.write_text("value\n+0\n-0\n0e-999999\n-0.0e999999\n", encoding="utf-8")
         report = check_csv(self.path, outlier_columns=["value"])
