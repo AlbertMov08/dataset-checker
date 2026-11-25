@@ -12,6 +12,21 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_cli_handles_oversized_fields_without_publishing_a_report(self):
+        content = "name\n" + "a" * (csv.field_size_limit() + 1) + "\n"
+        self.path.write_text(content, encoding="utf-8")
+        output = self.path.with_suffix(".json")
+        result = subprocess.run([sys.executable, "checker.py", str(self.path), "--output", str(output)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Line 2", result.stderr)
+        self.assertIn("field larger", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertFalse(output.exists())
+        self.assertEqual(self.path.read_text(encoding="utf-8"), content)
+
+
     def test_interrupted_export_removes_partial_json_and_preserves_source(self):
         self.path.write_text("name\nAna\n", encoding="utf-8")
         original = self.path.read_bytes()
