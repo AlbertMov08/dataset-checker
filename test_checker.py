@@ -12,6 +12,14 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_signed_and_exponent_zero_are_valid_without_becoming_missing(self):
+        self.path.write_text("value\n+0\n-0\n0e-999999\n-0.0e999999\n", encoding="utf-8")
+        report = check_csv(self.path, outlier_columns=["value"])
+        self.assertEqual(report["missing"], {"value": 0})
+        self.assertEqual(report["numeric"]["value"],
+                         {"count": 4, "min": 0, "max": 0, "mean": 0, "potential_outliers": 0})
+        self.assertEqual(report["duplicates"], 0)
+
     def test_numeric_and_duplicate_reports_are_equivalent_across_csv_dialects(self):
         rows = [["name", "amount"], ["A;B, C\tD", "2.5"], ["two\nlines", "7.5"],
                 ["A;B, C\tD", "2.5"], ["empty", " "]]
