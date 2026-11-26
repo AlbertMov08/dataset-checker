@@ -12,6 +12,18 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_stream_read_failure_never_returns_a_partial_report(self):
+        from checker import check_csv_stream
+
+        class BrokenSource:
+            def __iter__(self):
+                yield "name,age\n"
+                yield "Ana,20\n"
+                raise OSError("source disconnected")
+
+        with self.assertRaisesRegex(OSError, "source disconnected"):
+            check_csv_stream(BrokenSource(), ["age"])
+
     def test_cli_handles_oversized_fields_without_publishing_a_report(self):
         content = "name\n" + "a" * (csv.field_size_limit() + 1) + "\n"
         self.path.write_text(content, encoding="utf-8")
