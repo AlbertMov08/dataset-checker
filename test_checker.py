@@ -12,6 +12,15 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_quoted_empty_records_count_as_rows_while_blank_lines_do_not(self):
+        self.path.write_text('value\n\n""\n""\n7', encoding="utf-8")
+        report = check_csv(self.path, ["value"])
+        self.assertEqual(report["rows"], 3)
+        self.assertEqual(report["missing"], {"value": 2})
+        self.assertEqual(report["duplicates"], 1)
+        self.assertEqual(report["numeric"]["value"],
+                         {"count": 1, "min": 7, "max": 7, "mean": 7})
+
     def test_stream_read_failure_never_returns_a_partial_report(self):
         from checker import check_csv_stream
 
