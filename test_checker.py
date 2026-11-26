@@ -12,6 +12,15 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_numeric_equivalents_keep_original_duplicate_semantics(self):
+        self.path.write_text("amount\n1\n1.0\n1e0\n+1\n1\n", encoding="utf-8")
+        report = check_csv(self.path, ["amount"], ["amount"])
+        self.assertEqual(report["rows"], 5)
+        self.assertEqual(report["duplicates"], 1)
+        self.assertEqual(report["numeric"]["amount"],
+                         {"count": 5, "min": 1, "max": 1, "mean": 1,
+                          "potential_outliers": 0})
+
     def test_quoted_empty_records_count_as_rows_while_blank_lines_do_not(self):
         self.path.write_text('value\n\n""\n""\n7', encoding="utf-8")
         report = check_csv(self.path, ["value"])
