@@ -12,6 +12,17 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_unicode_report_paths_publish_once_and_preserve_existing_content(self):
+        output = self.path.parent / "résumé_日本語.json"
+        report = {"rows": 1, "columns": ["名前"]}
+        save_report(report, output)
+        original = output.read_bytes()
+        self.assertEqual(json.loads(original), report)
+        with self.assertRaises(FileExistsError):
+            save_report({"rows": 999}, output)
+        self.assertEqual(output.read_bytes(), original)
+        self.assertEqual(set(self.path.parent.iterdir()), {output})
+
     def test_numeric_equivalents_keep_original_duplicate_semantics(self):
         self.path.write_text("amount\n1\n1.0\n1e0\n+1\n1\n", encoding="utf-8")
         report = check_csv(self.path, ["amount"], ["amount"])
