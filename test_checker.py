@@ -12,6 +12,16 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_numeric_inference_remains_opt_in_for_identifier_columns(self):
+        self.path.write_text("id,amount\n001,5\n1,10\nNA,15\n", encoding="utf-8")
+        report = check_csv(self.path, ["amount"])
+        self.assertEqual(list(report["numeric"]), ["amount"])
+        self.assertEqual(report["numeric"]["amount"]["mean"], 10)
+        self.assertEqual(report["duplicates"], 0)
+        with self.assertRaisesRegex(ValueError, "Line 4.*id.*finite"):
+            check_csv(self.path, ["id", "amount"])
+
+
     def test_numeric_missingness_recognizes_unicode_space_without_dropping_zero(self):
         self.path.write_text("value\n\u2003\n\u00a0\n0\n-0\n", encoding="utf-8")
         report = check_csv(self.path, ["value"])
