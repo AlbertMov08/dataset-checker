@@ -11,6 +11,16 @@ from sql_check import compare_row_counts
 
 
 class SqlCheckTests(unittest.TestCase):
+    def test_sql_counts_retain_duplicates_instead_of_counting_distinct_people(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "repeated.csv"
+            path.write_text("name,age,city\nAna,20,Paris\n" + "Ana,20,Paris\n" * 4,
+                            encoding="utf-8")
+            original = path.read_bytes()
+            self.assertEqual(compare_row_counts(path), (5, 5))
+            self.assertEqual(path.read_bytes(), original)
+
+
     def test_database_failure_closes_connection_and_preserves_csv(self):
         import sqlite3
 
