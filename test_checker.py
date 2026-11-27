@@ -12,6 +12,16 @@ from checker import check_csv, percentage, save_report
 
 
 class CheckerTests(unittest.TestCase):
+    def test_numeric_missingness_recognizes_unicode_space_without_dropping_zero(self):
+        self.path.write_text("value\n\u2003\n\u00a0\n0\n-0\n", encoding="utf-8")
+        report = check_csv(self.path, ["value"])
+        self.assertEqual(report["rows"], 4)
+        self.assertEqual(report["missing"], {"value": 2})
+        self.assertEqual(report["numeric"]["value"],
+                         {"count": 2, "min": 0, "max": 0, "mean": 0})
+        self.assertEqual(report["duplicates"], 0)
+
+
     def test_unicode_report_paths_publish_once_and_preserve_existing_content(self):
         output = self.path.parent / "résumé_日本語.json"
         report = {"rows": 1, "columns": ["名前"]}
